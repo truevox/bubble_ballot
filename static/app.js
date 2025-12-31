@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const voteCountSpan = document.createElement('span'); // Declare here for closure
         
         voteBtn.onclick = () => handleVote(q.id, voteBtn, voteCountSpan);
-        if (hasVoted) voteBtn.disabled = true;
 
         voteCountSpan.className = 'vote-count';
         voteCountSpan.textContent = q.votes;
@@ -138,17 +137,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleVote(id, btn, countSpan) {
-        if (localStorage.getItem(`voted_${id}`)) return;
+        const hasVoted = localStorage.getItem(`voted_${id}`);
+        const direction = hasVoted ? 'down' : 'up';
 
         const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ direction: direction })
         });
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem(`voted_${id}`, 'true');
-            btn.classList.add('voted');
-            btn.disabled = true;
+
+            if (hasVoted) {
+                localStorage.removeItem(`voted_${id}`);
+                btn.classList.remove('voted');
+            } else {
+                localStorage.setItem(`voted_${id}`, 'true');
+                btn.classList.add('voted');
+            }
+
             countSpan.textContent = data.votes;
             
             const bubble = document.getElementById(`q-${id}`);
