@@ -1,3 +1,4 @@
+// Cache buster: 1
 document.addEventListener('DOMContentLoaded', () => {
     const questionInput = document.getElementById('questionInput');
     const submitBtn = document.getElementById('submitBtn');
