@@ -35,6 +35,13 @@ class BoardTestCase(unittest.TestCase):
         self.assertEqual(data[0]['content'], 'Is this a test?')
         self.assertEqual(data[0]['id'], question_id)
 
+    def test_add_question_no_content(self):
+        # Add a question with no content
+        rv = self.app.post('/api/test_board/questions',
+                           data=json.dumps({}),
+                           content_type='application/json')
+        self.assertEqual(rv.status_code, 400)
+
     def test_board_separation(self):
         # Add to board A
         self.app.post('/api/board_A/questions', 
@@ -75,6 +82,10 @@ class BoardTestCase(unittest.TestCase):
         rv = self.app.post(f'/api/questions/{q_id}/vote')
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 2)
+
+    def test_vote_non_existent_question(self):
+        rv = self.app.post('/api/questions/999/vote')
+        self.assertEqual(rv.status_code, 404)
 
     def test_fuzzy_search(self):
         board = 'search_board'
