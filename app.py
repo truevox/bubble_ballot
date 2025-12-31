@@ -41,6 +41,7 @@ def vote_question(question_id):
     return jsonify({'votes': new_votes, 'id': question_id})
 
 if __name__ == '__main__':
-    # Disable debug mode for production safety, allow override via env var
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    # CEV-Forward: Respect the environment's wishes. Default to 5000 for local dev.
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
