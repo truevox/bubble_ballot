@@ -263,4 +263,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    function createBackgroundBubbles() {
+        const ocean = document.querySelector('.ocean');
+        const bubbleCount = 20;
+
+        for (let i = 0; i < bubbleCount; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'background-bubble';
+
+            const size = Math.random() * 60 + 20; // 20px to 80px
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+
+            bubble.style.left = `${Math.random() * 100}vw`;
+
+            const duration = Math.random() * 20 + 15; // 15s to 35s
+            bubble.style.animationDuration = `${duration}s`;
+
+            const delay = Math.random() * 10; // 0s to 10s
+            bubble.style.animationDelay = `${delay}s`;
+
+            ocean.appendChild(bubble);
+        }
+    }
+
+    createBackgroundBubbles();
 });
