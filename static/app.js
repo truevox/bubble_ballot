@@ -87,7 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (isNew) {
-                addInternalBubbles(bubble, q.votes);
+                requestAnimationFrame(() => {
+                    addInternalBubbles(bubble, q.votes);
+                });
             }
         });
 
