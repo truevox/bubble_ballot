@@ -67,24 +67,45 @@ class BoardTestCase(unittest.TestCase):
 
     def test_voting(self):
         # Add question
-        rv = self.app.post('/api/vote_board/questions', 
+        board_slug = 'vote_board'
+        rv = self.app.post(f'/api/{board_slug}/questions',
                            data=json.dumps({'content': 'Vote for me'}),
                            content_type='application/json')
         q_id = json.loads(rv.data)['id']
 
         # Vote
-        rv = self.app.post(f'/api/questions/{q_id}/vote')
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 1)
 
         # Vote again
-        rv = self.app.post(f'/api/questions/{q_id}/vote')
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote')
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 2)
 
+    def test_weighted_voting_on_testing_board(self):
+        # Add question to the 'testing' board
+        rv = self.app.post('/api/testing/questions',
+                           data=json.dumps({'content': 'Weighted vote test'}),
+                           content_type='application/json')
+        self.assertEqual(rv.status_code, 201)
+        q_id = json.loads(rv.data)['id']
+
+        # Vote once
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 20)
+
+        # Vote again
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 40)
+
     def test_vote_non_existent_question(self):
-        rv = self.app.post('/api/questions/999/vote')
+        rv = self.app.post('/api/any_board/questions/999/vote')
         self.assertEqual(rv.status_code, 404)
 
     def test_fuzzy_search(self):

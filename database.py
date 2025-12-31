@@ -39,11 +39,11 @@ def get_questions(board_slug):
     conn.close()
     return [dict(q) for q in questions]
 
-def vote_question(question_id):
+def vote_question(question_id, amount=1):
     conn = get_db_connection()
-    conn.execute('UPDATE questions SET votes = votes + 1 WHERE id = ?', (question_id,))
+    conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
     conn.commit()
-    
+
     # Fetch updated vote count
     row = conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()
     conn.close()

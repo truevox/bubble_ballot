@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleVote(id, btn, countSpan) {
         if (localStorage.getItem(`voted_${id}`)) return;
 
-        const response = await fetch(`/api/questions/${id}/vote`, {
+        const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
             method: 'POST'
         });
 
@@ -152,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
             countSpan.textContent = data.votes;
             
             const bubble = document.getElementById(`q-${id}`);
+            // The addInternalBubbles function syncs the number of visible minibubbles
+            // to the new total vote count from the server.
             addInternalBubbles(bubble, data.votes);
         }
     }
