@@ -11,7 +11,12 @@ def index():
 
 @app.route('/<board_slug>')
 def board(board_slug):
-    return render_template('board.html', board_slug=board_slug)
+    try:
+        with open('VERSION', 'r') as f:
+            version = f.read().strip()
+    except FileNotFoundError:
+        version = 'dev'
+    return render_template('board.html', board_slug=board_slug, version=version)
 
 @app.route('/api/<board_slug>/questions', methods=['GET'])
 def get_questions(board_slug):

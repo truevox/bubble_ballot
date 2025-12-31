@@ -98,6 +98,7 @@ button:hover {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     transition: transform 0.5s ease, top 0.5s ease;
     overflow: hidden; /* Keep internal bubbles inside */
+    min-height: 100px;
 }
 
 .bubble-content {
@@ -148,11 +149,22 @@ button:hover {
 /* Internal animation bubbles */
 .internal-bubble {
     position: absolute;
+    top: 0;
+    left: 0;
     background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     z-index: 1;
     /* Transition for size changes */
     transition: width 0.5s ease, height 0.5s ease;
+}
+
+.version {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8em;
+    z-index: 100;
 }
 
 .internal-bubble.popping {
