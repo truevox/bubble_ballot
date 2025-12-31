@@ -1,0 +1,172 @@
+:root {
+    --bg-color-top: #006994;
+    --bg-color-bottom: #001e36;
+    --bubble-color: rgba(255, 255, 255, 0.15);
+    --bubble-border: rgba(255, 255, 255, 0.4);
+    --text-color: #e0f7fa;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    overflow-x: hidden;
+}
+
+.ocean {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, var(--bg-color-top), var(--bg-color-bottom));
+    position: relative;
+    padding-bottom: 50px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+}
+
+header h1 {
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    color: #fff;
+    font-weight: 300;
+}
+
+.input-area {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(5px);
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 1.1em;
+    resize: vertical;
+    box-sizing: border-box; /* Important for width: 100% */
+}
+
+textarea:focus {
+    outline: none;
+    background: rgba(255,255,255,0.2);
+}
+
+button {
+    align-self: flex-end;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.bubbles-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bubble {
+    background: var(--bubble-color);
+    border: 1px solid var(--bubble-border);
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.5s ease, top 0.5s ease;
+    overflow: hidden; /* Keep internal bubbles inside */
+}
+
+.bubble-content {
+    font-size: 1.2em;
+    position: relative;
+    z-index: 2; /* Text above internal bubbles */
+    pointer-events: none; /* Let clicks pass through text to the vote button/area if needed, though we have a button */
+}
+
+.vote-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    position: relative;
+    z-index: 3; /* Above internal bubbles */
+}
+
+.vote-btn {
+    background: none;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.vote-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.vote-btn.voted {
+    background: #fff;
+    color: var(--bg-color-top);
+    cursor: default;
+}
+
+.vote-count {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Internal animation bubbles */
+.internal-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    z-index: 1;
+    animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-100px) translateX(20px);
+        opacity: 0;
+    }
+}

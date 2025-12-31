@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Underwater Questions - {{ board_slug }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="ocean">
+        <div class="surface"></div>
+        <div class="container">
+            <header>
+                <h1>Board: /{{ board_slug }}</h1>
+            </header>
+            
+            <div class="input-area">
+                <textarea id="questionInput" placeholder="Type your question here... (Duplicates will filter below)" rows="3"></textarea>
+                <button id="submitBtn">Submit Bubble</button>
+            </div>
+
+            <div id="questionsList" class="bubbles-container">
+                <!-- Questions will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const BOARD_SLUG = "{{ board_slug }}";
+    </script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

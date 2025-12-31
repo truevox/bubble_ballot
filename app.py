@@ -1,0 +1,46 @@
+from flask import Flask, render_template, request, jsonify
+import database
+import search
+import os
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return "Please go to a board, e.g., <a href='/general'>/general</a>"
+
+@app.route('/<board_slug>')
+def board(board_slug):
+    return render_template('board.html', board_slug=board_slug)
+
+@app.route('/api/<board_slug>/questions', methods=['GET'])
+def get_questions(board_slug):
+    questions = database.get_questions(board_slug)
+    query = request.args.get('q')
+    
+    if query:
+        questions = search.search_questions(query, questions)
+        
+    return jsonify(questions)
+
+@app.route('/api/<board_slug>/questions', methods=['POST'])
+def add_question(board_slug):
+    data = request.json
+    content = data.get('content')
+    if not content:
+        return jsonify({'error': 'Content is required'}), 400
+        
+    new_id = database.add_question(board_slug, content)
+    return jsonify({'id': new_id, 'status': 'success'}), 201
+
+@app.route('/api/questions/<int:question_id>/vote', methods=['POST'])
+def vote_question(question_id):
+    new_votes = database.vote_question(question_id)
+    if new_votes is None:
+        return jsonify({'error': 'Question not found'}), 404
+    return jsonify({'votes': new_votes, 'id': question_id})
+
+if __name__ == '__main__':
+    # Disable debug mode for production safety, allow override via env var
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
