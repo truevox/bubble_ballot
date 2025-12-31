@@ -38,9 +38,13 @@ def add_question(board_slug):
     new_id = database.add_question(board_slug, content)
     return jsonify({'id': new_id, 'status': 'success'}), 201
 
-@app.route('/api/questions/<int:question_id>/vote', methods=['POST'])
-def vote_question(question_id):
-    new_votes = database.vote_question(question_id)
+@app.route('/api/<board_slug>/questions/<int:question_id>/vote', methods=['POST'])
+def vote_question(board_slug, question_id):
+    if board_slug == 'testing':
+        amount = 20
+    else:
+        amount = 1
+    new_votes = database.vote_question(question_id, amount)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
     return jsonify({'votes': new_votes, 'id': question_id})
