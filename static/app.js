@@ -150,7 +150,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let isAnimationLoopRunning = false;
+
+    function startAnimationLoop() {
+        if (isAnimationLoopRunning) return;
+        isAnimationLoopRunning = true;
+
+        function animate() {
+            const bubbles = document.querySelectorAll('.internal-bubble:not(.popping)');
+
+            if (bubbles.length === 0) {
+                isAnimationLoopRunning = false;
+                return;
+            }
+
+            bubbles.forEach(b => {
+                if (!b.physics) return;
+
+                const container = b.parentElement;
+                const containerWidth = container.offsetWidth;
+                const containerHeight = container.offsetHeight;
+                const bubbleSize = parseFloat(b.style.width);
+
+                // Update position
+                b.physics.x += b.physics.vx;
+                b.physics.y += b.physics.vy;
+
+                // Bounce off walls
+                if (b.physics.x <= 0 || b.physics.x >= containerWidth - bubbleSize) {
+                    b.physics.vx *= -1;
+                }
+                if (b.physics.y <= 0 || b.physics.y >= containerHeight - bubbleSize) {
+                    b.physics.vy *= -1;
+                }
+
+                b.physics.x = Math.max(0, Math.min(b.physics.x, containerWidth - bubbleSize));
+                b.physics.y = Math.max(0, Math.min(b.physics.y, containerHeight - bubbleSize));
+
+                b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    }
+
     function addInternalBubbles(container, voteCount) {
+        startAnimationLoop();
+
         let count = voteCount;
         let size = 20; 
         
@@ -163,48 +211,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxVisuals = 50; 
         const visualCount = Math.min(count, maxVisuals);
 
-        // Get existing active bubbles (excluding ones currently popping)
         const currentBubbles = Array.from(container.querySelectorAll('.internal-bubble:not(.popping)'));
         const currentCount = currentBubbles.length;
 
-        // Update size of existing bubbles
         currentBubbles.forEach(b => {
             b.style.width = `${size}px`;
             b.style.height = `${size}px`;
         });
 
         if (visualCount > currentCount) {
-            // Add new bubbles
             const toAdd = visualCount - currentCount;
             for (let i = 0; i < toAdd; i++) {
                 const b = document.createElement('div');
                 b.className = 'internal-bubble';
 
-                const left = Math.random() * 90;
-                const delay = Math.random() * 5;
-                const duration = 3 + Math.random() * 5;
-
                 b.style.width = `${size}px`;
                 b.style.height = `${size}px`;
-                b.style.left = `${left}%`;
-                b.style.bottom = '-20px';
-                b.style.animationDuration = `${duration}s`;
-                b.style.animationDelay = `${delay}s`;
+
+                const containerWidth = container.offsetWidth;
+                const containerHeight = container.offsetHeight;
+
+                b.physics = {
+                    x: Math.random() * (containerWidth - size),
+                    y: Math.random() * (containerHeight - size),
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5
+                };
+
+                b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
 
                 container.appendChild(b);
             }
         } else if (visualCount < currentCount) {
-            // Remove excess bubbles with pop animation
             const toRemove = currentCount - visualCount;
-            // Remove the "oldest" ones (first in list) or random? First is fine.
             for (let i = 0; i < toRemove; i++) {
                 const b = currentBubbles[i];
                 if (b) {
                     b.classList.add('popping');
-                    // Remove from DOM after animation
                     setTimeout(() => {
                         b.remove();
-                    }, 300); // Matches CSS animation duration
+                    }, 300);
                 }
             }
         }
