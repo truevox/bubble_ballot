@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update or Add
         questions.forEach((q, index) => {
             let bubble = document.getElementById(`q-${q.id}`);
+            let isNew = false;
 
             if (bubble) {
                 // Update existing
@@ -76,12 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Create new
                 bubble = createBubbleElement(q);
+                isNew = true;
             }
             
             // Ensure proper order without unnecessary moves
             const currentChild = questionsList.children[index];
             if (currentChild !== bubble) {
                 questionsList.insertBefore(bubble, currentChild || null);
+            }
+
+            if (isNew) {
+                addInternalBubbles(bubble, q.votes);
             }
         });
 
@@ -125,8 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         bubble.appendChild(contentDiv);
         bubble.appendChild(voteArea);
-
-        addInternalBubbles(bubble, q.votes);
         
         return bubble;
     }
