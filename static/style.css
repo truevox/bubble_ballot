@@ -99,6 +99,35 @@ button:hover {
     transition: transform 0.5s ease, top 0.5s ease;
     overflow: hidden; /* Keep internal bubbles inside */
     min-height: 100px;
+    will-change: transform;
+}
+
+
+.bubble-stale {
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes floatDown {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+.bubble-moving-up .bubble-content,
+.bubble-moving-up .vote-area {
+    animation: floatUp 0.5s ease-in-out;
+}
+
+.bubble-moving-down .bubble-content,
+.bubble-moving-down .vote-area {
+    animation: floatDown 0.5s ease-in-out;
 }
 
 .bubble-content {
@@ -154,8 +183,8 @@ button:hover {
     background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     z-index: 1;
-    /* Transition for size changes */
-    transition: width 0.5s ease, height 0.5s ease;
+    /* Transition for size changes and movement */
+    transition: width 0.5s ease, height 0.5s ease, transform 0.5s ease;
 }
 
 .version {
