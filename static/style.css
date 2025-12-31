@@ -167,7 +167,7 @@ button:hover {
     z-index: 100;
 }
 
-.internal-bubble.popping {
+.internal-bubble.popping, .bubble.popping {
     animation: pop 0.3s ease-out forwards;
 }
 
