@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentIds = new Set(questions.map(q => q.id));
 
         // Update or Add
-        questions.forEach(q => {
+        questions.forEach((q, index) => {
             let bubble = document.getElementById(`q-${q.id}`);
 
             if (bubble) {
@@ -76,14 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Create new
                 bubble = createBubbleElement(q);
-                questionsList.appendChild(bubble);
             }
             
-            // Re-order? If simplicity is key, appending might break order visually if sort changed.
-            // Since we are sorting by votes DESC, re-appending ensures order.
-            // A simple way to enforce order without destroying elements is appendChild in loop order.
-            // appendChild moves the element if it already exists.
-            questionsList.appendChild(bubble);
+            // Ensure proper order without unnecessary moves
+            const currentChild = questionsList.children[index];
+            if (currentChild !== bubble) {
+                questionsList.insertBefore(bubble, currentChild || null);
+            }
         });
 
         // Remove questions that are no longer in the list (e.g. filtered out)
@@ -152,15 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addInternalBubbles(container, voteCount) {
-        // Only clear if we are re-rendering significantly? 
-        // Actually, to add "more" bubbles, we probably want to clear and re-add 
-        // OR intelligently add the difference. 
-        // For simplicity, re-adding all is safer for "count" logic, 
-        // but might reset animation of existing ones. 
-        // Given we only call this on vote change or init, it's acceptable.
-        
-        container.querySelectorAll('.internal-bubble').forEach(e => e.remove());
-
         let count = voteCount;
         let size = 20; 
         
@@ -173,22 +163,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxVisuals = 50; 
         const visualCount = Math.min(count, maxVisuals);
 
-        for (let i = 0; i < visualCount; i++) {
-            const b = document.createElement('div');
-            b.className = 'internal-bubble';
-            
-            const left = Math.random() * 90; 
-            const delay = Math.random() * 5; 
-            const duration = 3 + Math.random() * 5; 
-            
+        // Get existing active bubbles (excluding ones currently popping)
+        const currentBubbles = Array.from(container.querySelectorAll('.internal-bubble:not(.popping)'));
+        const currentCount = currentBubbles.length;
+
+        // Update size of existing bubbles
+        currentBubbles.forEach(b => {
             b.style.width = `${size}px`;
             b.style.height = `${size}px`;
-            b.style.left = `${left}%`;
-            b.style.bottom = '-20px'; 
-            b.style.animationDuration = `${duration}s`;
-            b.style.animationDelay = `${delay}s`; 
-            
-            container.appendChild(b);
+        });
+
+        if (visualCount > currentCount) {
+            // Add new bubbles
+            const toAdd = visualCount - currentCount;
+            for (let i = 0; i < toAdd; i++) {
+                const b = document.createElement('div');
+                b.className = 'internal-bubble';
+
+                const left = Math.random() * 90;
+                const delay = Math.random() * 5;
+                const duration = 3 + Math.random() * 5;
+
+                b.style.width = `${size}px`;
+                b.style.height = `${size}px`;
+                b.style.left = `${left}%`;
+                b.style.bottom = '-20px';
+                b.style.animationDuration = `${duration}s`;
+                b.style.animationDelay = `${delay}s`;
+
+                container.appendChild(b);
+            }
+        } else if (visualCount < currentCount) {
+            // Remove excess bubbles with pop animation
+            const toRemove = currentCount - visualCount;
+            // Remove the "oldest" ones (first in list) or random? First is fine.
+            for (let i = 0; i < toRemove; i++) {
+                const b = currentBubbles[i];
+                if (b) {
+                    b.classList.add('popping');
+                    // Remove from DOM after animation
+                    setTimeout(() => {
+                        b.remove();
+                    }, 300); // Matches CSS animation duration
+                }
+            }
         }
     }
 });
