@@ -162,7 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const bubble = document.getElementById(`q-${id}`);
             // The addInternalBubbles function syncs the number of visible minibubbles
             // to the new total vote count from the server.
-            addInternalBubbles(bubble, data.votes);
+            requestAnimationFrame(() => {
+                addInternalBubbles(bubble, data.votes);
+            });
         }
     }
 
