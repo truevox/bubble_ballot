@@ -187,17 +187,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isPopping = b.classList.contains('popping');
 
-                if (!isPopping) {
+                if (isPopping) {
+                    // Handle popping animation. The bubble stays in its last known position.
+                    let transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
+
+                    if (b.animation && b.animation.type === 'pop') {
+                        const elapsed = Date.now() - b.animation.start;
+                        const progress = Math.min(elapsed / b.animation.duration, 1);
+
+                        let scale = 1;
+                        if (progress < 0.5) {
+                            scale = 1 + (progress * 2) * 0.4; // Grow to 1.4
+                        } else {
+                            scale = 1.4 - ((progress - 0.5) * 2) * 1.4; // Shrink to 0
+                        }
+                        transform += ` scale(${scale})`;
+                    }
+                    b.style.transform = transform;
+
+                } else {
+                    // Handle normal movement.
                     const container = b.parentElement;
                     const containerWidth = container.offsetWidth;
                     const containerHeight = container.offsetHeight;
                     const bubbleSize = parseFloat(b.style.width);
 
-                    // Update position
                     b.physics.x += b.physics.vx;
                     b.physics.y += b.physics.vy;
 
-                    // Bounce off walls
                     if (b.physics.x <= 0 || b.physics.x >= containerWidth - bubbleSize) {
                         b.physics.vx *= -1;
                     }
@@ -207,28 +224,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     b.physics.x = Math.max(0, Math.min(b.physics.x, containerWidth - bubbleSize));
                     b.physics.y = Math.max(0, Math.min(b.physics.y, containerHeight - bubbleSize));
+
+                    b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
                 }
-
-                let transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
-
-                if (b.animation && b.animation.type === 'pop') {
-                    const elapsed = Date.now() - b.animation.start;
-                    const progress = Math.min(elapsed / b.animation.duration, 1);
-
-                    let scale = 1;
-                    // Mimic the pop keyframe animation: grow then shrink
-                    if (progress < 0.5) {
-                        // Grow from 1 to 1.4 in the first half
-                        scale = 1 + (progress * 2) * 0.4;
-                    } else {
-                        // Shrink from 1.4 to 0 in the second half
-                        scale = 1.4 - ((progress - 0.5) * 2) * 1.4;
-                    }
-                    transform += ` scale(${scale})`;
-                }
-
-
-                b.style.transform = transform;
             });
 
             requestAnimationFrame(animate);

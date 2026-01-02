@@ -54,12 +54,6 @@ def vote_question(board_slug, question_id):
     new_votes = database.vote_question(question_id, amount)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
-
-    # Prevent votes from going negative; revert the change if it would.
-    if new_votes < 0:
-        # Attempt to undo the previous update to keep the stored count non-negative.
-        database.vote_question(question_id, -amount)
-        return jsonify({'error': 'Votes cannot be negative'}), 400
     return jsonify({'votes': new_votes, 'id': question_id})
 
 if __name__ == '__main__':
