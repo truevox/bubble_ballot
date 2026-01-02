@@ -329,24 +329,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const toAdd = visualCount - currentCount;
             for (let i = 0; i < toAdd; i++) {
                 const b = document.createElement('div');
-                b.className = 'internal-bubble cavitate';
-
+                b.className = 'internal-bubble';
                 b.style.width = `${size}px`;
                 b.style.height = `${size}px`;
-
-                const containerWidth = container.offsetWidth;
-                const containerHeight = container.offsetHeight;
-
-                b.physics = {
-                    x: Math.random() * (containerWidth - size),
-                    y: Math.random() * (containerHeight - size),
-                    vx: (Math.random() - 0.5) * velocity,
-                    vy: (Math.random() - 0.5) * velocity
-                };
-
-                b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
+                b.style.opacity = '0'; // Start invisible to prevent flicker at (0,0)
 
                 container.appendChild(b);
+
+                // Defer positioning until the element is in the DOM and has dimensions
+                requestAnimationFrame(() => {
+                    const containerWidth = container.offsetWidth;
+                    const containerHeight = container.offsetHeight;
+
+                    if (containerWidth > 0 && containerHeight > 0) {
+                        b.physics = {
+                            x: Math.random() * (containerWidth - size),
+                            y: Math.random() * (containerHeight - size),
+                            vx: (Math.random() - 0.5) * velocity,
+                            vy: (Math.random() - 0.5) * velocity
+                        };
+
+                        b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
+                        b.style.opacity = '1';
+                        b.classList.add('cavitate'); // Start animation now
+                    } else {
+                        // If container is not visible or has no size, don't add the bubble
+                        b.remove();
+                    }
+                });
             }
         } else if (visualCount < currentCount) {
             const toRemove = currentCount - visualCount;
