@@ -11,6 +11,9 @@ def index():
 
 @app.route('/<board_slug>')
 def board(board_slug):
+    if board_slug == 'testing':
+        database.pre_populate_testing_board()
+
     try:
         with open('VERSION', 'r') as f:
             version = f.read().strip()
@@ -43,10 +46,7 @@ def vote_question(board_slug, question_id):
     data = request.json or {}
     direction = data.get('direction', 'up')
 
-    if board_slug == 'testing':
-        amount = 20
-    else:
-        amount = 1
+    amount = 1
 
     if direction == 'down':
         amount *= -1

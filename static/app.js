@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.className = 'bubble';
         bubble.id = `q-${q.id}`;
 
-        const hasVoted = localStorage.getItem(`voted_${q.id}`);
+        const hasVoted = BOARD_SLUG !== 'testing' && localStorage.getItem(`voted_${q.id}`);
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'bubble-content';
@@ -142,7 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn.disabled) return; // Prevent double-clicking
         btn.disabled = true;
 
-        const hasVoted = localStorage.getItem(`voted_${id}`);
+        const isTestingBoard = BOARD_SLUG === 'testing';
+        const hasVoted = !isTestingBoard && localStorage.getItem(`voted_${id}`);
         const direction = hasVoted ? 'down' : 'up';
 
         try {
@@ -155,12 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 const data = await response.json();
 
-                if (hasVoted) {
-                    localStorage.removeItem(`voted_${id}`);
-                    btn.classList.remove('voted');
-                } else {
-                    localStorage.setItem(`voted_${id}`, 'true');
-                    btn.classList.add('voted');
+                if (!isTestingBoard) {
+                    if (hasVoted) {
+                        localStorage.removeItem(`voted_${id}`);
+                        btn.classList.remove('voted');
+                    } else {
+                        localStorage.setItem(`voted_${id}`, 'true');
+                        btn.classList.add('voted');
+                    }
                 }
 
                 countSpan.textContent = data.votes;
@@ -182,55 +185,90 @@ document.addEventListener('DOMContentLoaded', () => {
         isAnimationLoopRunning = true;
 
         function animate() {
-            const bubbles = document.querySelectorAll('.internal-bubble');
+            const allBubbles = Array.from(document.querySelectorAll('.internal-bubble'));
+            const movingBubbles = allBubbles.filter(b => b.physics && !b.classList.contains('popping'));
 
-            if (bubbles.length === 0) {
+            if (allBubbles.length === 0) {
                 isAnimationLoopRunning = false;
                 return;
             }
 
-            bubbles.forEach(b => {
+            // Handle collisions between moving bubbles
+            for (let i = 0; i < movingBubbles.length; i++) {
+                for (let j = i + 1; j < movingBubbles.length; j++) {
+                    const b1 = movingBubbles[i];
+                    const b2 = movingBubbles[j];
+
+                    const dx = b2.physics.x - b1.physics.x;
+                    const dy = b2.physics.y - b1.physics.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const size1 = parseFloat(b1.style.width);
+                    const size2 = parseFloat(b2.style.width);
+                    const minDistance = (size1 + size2) / 2;
+
+                    if (distance < minDistance) {
+                        // Resolve overlap
+                        const overlap = 0.5 * (minDistance - distance);
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+                        b1.physics.x -= overlap * nx;
+                        b1.physics.y -= overlap * ny;
+                        b2.physics.x += overlap * nx;
+                        b2.physics.y += overlap * ny;
+
+                        // Resolve collision (elastic collision with equal mass)
+                        const dvx = b1.physics.vx - b2.physics.vx;
+                        const dvy = b1.physics.vy - b2.physics.vy;
+                        const dot = dvx * nx + dvy * ny;
+
+                        // Exchange momentum along the collision normal
+                        const impulseX = dot * nx;
+                        const impulseY = dot * ny;
+
+                        b1.physics.vx -= impulseX;
+                        b1.physics.vy -= impulseY;
+                        b2.physics.vx += impulseX;
+                        b2.physics.vy += impulseY;
+                    }
+                }
+            }
+
+            // Handle movement, wall collisions, and animations for all bubbles
+            allBubbles.forEach(b => {
                 if (!b.physics) return;
 
                 const isPopping = b.classList.contains('popping');
 
                 if (isPopping) {
-                    // Handle popping animation. The bubble stays in its last known position.
+                    // Handle popping animation. Bubble stays in place.
                     let transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
-
                     if (b.animation && b.animation.type === 'pop') {
                         const elapsed = Date.now() - b.animation.start;
                         const progress = Math.min(elapsed / b.animation.duration, 1);
-
                         let scale = 1;
                         if (progress < 0.5) {
-                            scale = 1 + (progress * 2) * 0.4; // Grow to 1.4
+                            scale = 1 + (progress * 2) * 0.4;
                         } else {
-                            scale = 1.4 - ((progress - 0.5) * 2) * 1.4; // Shrink to 0
+                            scale = 1.4 - ((progress - 0.5) * 2) * 1.4;
                         }
                         transform += ` scale(${scale})`;
                     }
                     b.style.transform = transform;
-
                 } else {
-                    // Handle normal movement.
+                    // Handle normal movement
+                    b.physics.x += b.physics.vx;
+                    b.physics.y += b.physics.vy;
+
+                    // Wall collisions
                     const container = b.parentElement;
                     const containerWidth = container.offsetWidth;
                     const containerHeight = container.offsetHeight;
                     const bubbleSize = parseFloat(b.style.width);
 
-                    b.physics.x += b.physics.vx;
-                    b.physics.y += b.physics.vy;
-
-                    if (b.physics.x <= 0 || b.physics.x >= containerWidth - bubbleSize) {
-                        b.physics.vx *= -1;
-                    }
-                    if (b.physics.y <= 0 || b.physics.y >= containerHeight - bubbleSize) {
-                        b.physics.vy *= -1;
-                    }
-
-                    b.physics.x = Math.max(0, Math.min(b.physics.x, containerWidth - bubbleSize));
-                    b.physics.y = Math.max(0, Math.min(b.physics.y, containerHeight - bubbleSize));
+                    if (b.physics.x <= 0) { b.physics.x = 0; b.physics.vx *= -1; }
+                    if (b.physics.x >= containerWidth - bubbleSize) { b.physics.x = containerWidth - bubbleSize; b.physics.vx *= -1; }
+                    if (b.physics.y <= 0) { b.physics.y = 0; b.physics.vy *= -1; }
+                    if (b.physics.y >= containerHeight - bubbleSize) { b.physics.y = containerHeight - bubbleSize; b.physics.vy *= -1; }
 
                     b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
                 }
@@ -246,15 +284,26 @@ document.addEventListener('DOMContentLoaded', () => {
         startAnimationLoop();
 
         let count = voteCount;
-        let size = 20; 
-        
-        if (count > 100) {
-            size = 5;
-        } else if (count > 50) {
-            size = 10;
+        let size, maxVisuals, velocity;
+
+        if (count > 200) { // Churning foam
+            size = 4;
+            maxVisuals = 150;
+            velocity = 2.5;
+        } else if (count > 100) { // Dense bubbles
+            size = 8;
+            maxVisuals = 100;
+            velocity = 2;
+        } else if (count > 50) { // Regular bubbles
+            size = 15;
+            maxVisuals = 75;
+            velocity = 1.5;
+        } else { // Sparse bubbles
+            size = 20;
+            maxVisuals = 50;
+            velocity = 1;
         }
 
-        const maxVisuals = 50; 
         const visualCount = Math.min(count, maxVisuals);
 
         const currentBubbles = Array.from(container.querySelectorAll('.internal-bubble:not(.popping)'));
@@ -280,8 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 b.physics = {
                     x: Math.random() * (containerWidth - size),
                     y: Math.random() * (containerHeight - size),
-                    vx: (Math.random() - 0.5) * 1.5,
-                    vy: (Math.random() - 0.5) * 1.5
+                    vx: (Math.random() - 0.5) * velocity,
+                    vy: (Math.random() - 0.5) * velocity
                 };
 
                 b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
