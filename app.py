@@ -43,6 +43,8 @@ def vote_question(board_slug, question_id):
     data = request.json or {}
     direction = data.get('direction', 'up')
 
+    if direction not in ('up', 'down'):
+        return jsonify({'error': "Invalid direction. Must be 'up' or 'down'."}), 400
     if board_slug == 'testing':
         amount = 20
     else:
