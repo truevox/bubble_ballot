@@ -51,10 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawOcean() {
         ctx.fillStyle = '#006994'; // Sea Blue
         ctx.beginPath();
-        ctx.moveTo(0, height * 0.7);
+        ctx.moveTo(0, height * 0.6);
         for (let x = 0; x < width; x++) {
             const y = Math.sin((x + waveOffset) * 0.01) * 10 + Math.sin((x + waveOffset) * 0.02) * 5;
-            ctx.lineTo(x, height * 0.7 + y);
+            ctx.lineTo(x, height * 0.6 + y);
         }
         ctx.lineTo(width, height);
         ctx.lineTo(0, height);
@@ -65,107 +65,84 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawIsland() {
         ctx.fillStyle = '#F4A460'; // Sandy Brown
         ctx.beginPath();
-        ctx.moveTo(width * 0.2, height * 0.8);
-        ctx.bezierCurveTo(width * 0.3, height * 0.7, width * 0.7, height * 0.7, width * 0.8, height * 0.85);
-        ctx.bezierCurveTo(width * 0.7, height * 0.9, width * 0.3, height * 0.9, width * 0.2, height * 0.8);
+        ctx.moveTo(width * 0.25, height * 0.7);
+        ctx.bezierCurveTo(width * 0.3, height * 0.6, width * 0.7, height * 0.6, width * 0.75, height * 0.75);
+        ctx.bezierCurveTo(width * 0.7, height * 0.8, width * 0.3, height * 0.8, width * 0.25, height * 0.7);
         ctx.closePath();
         ctx.fill();
     }
 
     function drawTree() {
-        const treeX = width * 0.6;
-        const treeY = height * 0.78;
-        const trunkHeight = 150;
-        const trunkWidth = 15;
+        const treeX = width * 0.65;
+        const treeY = height * 0.7;
+        const trunkHeight = 120;
+        const trunkWidth = 10;
 
         // Trunk
         ctx.beginPath();
-        ctx.moveTo(treeX - trunkWidth / 2, treeY);
+        ctx.moveTo(treeX, treeY);
         ctx.bezierCurveTo(
-            treeX - trunkWidth * 2, treeY - trunkHeight * 0.5,
-            treeX + trunkWidth * 2, treeY - trunkHeight * 0.75,
-            treeX, treeY - trunkHeight
+            treeX + trunkWidth * 2, treeY - trunkHeight * 0.5,
+            treeX - trunkWidth, treeY - trunkHeight * 0.75,
+            treeX + 5, treeY - trunkHeight
         );
-         ctx.lineTo(treeX + trunkWidth/2, treeY - trunkHeight);
+        ctx.lineTo(treeX - 5, treeY - trunkHeight);
          ctx.bezierCurveTo(
-            treeX + trunkWidth * 2, treeY - trunkHeight * 0.75,
-            treeX - trunkWidth * 1.5, treeY - trunkHeight * 0.5,
-            treeX + trunkWidth / 2, treeY
+            treeX - trunkWidth * 2, treeY - trunkHeight * 0.5,
+            treeX + trunkWidth, treeY - trunkHeight * 0.75,
+            treeX, treeY
         );
         ctx.closePath();
-        ctx.fillStyle = '#8B5A2B'; // A more textured brown
+        ctx.fillStyle = '#A0522D';
         ctx.fill();
 
-        // Trunk texture
-        ctx.strokeStyle = '#5C3D1E';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < trunkHeight; i += 10) {
-            const y = treeY - i;
-            const xOffset = Math.sin(i / 20) * 5;
+        // Trunk lines
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < trunkHeight; i+= 15) {
             ctx.beginPath();
-            ctx.moveTo(treeX - trunkWidth / 2 + xOffset, y);
-            ctx.lineTo(treeX + trunkWidth / 2 + xOffset, y - 2);
+            ctx.moveTo(treeX - 4, treeY - i);
+            ctx.lineTo(treeX + 4, treeY - i - 2);
             ctx.stroke();
         }
 
-
+        // Leaves
         const topX = treeX;
         const topY = treeY - trunkHeight;
+        ctx.fillStyle = '#228B22'; // Forest Green
 
-        // Coconuts
-        ctx.fillStyle = '#654321';
-        for (let i = 0; i < 3; i++) {
-            const angle = i * (Math.PI * 2 / 5) + Math.PI / 4;
-            const x = topX + Math.cos(angle) * 10;
-            const y = topY + Math.sin(angle) * 10;
-            ctx.beginPath();
-            ctx.arc(x, y, 8, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Leaves
         ctx.save();
         ctx.translate(topX, topY);
-        ctx.rotate(leafAngle);
-        ctx.fillStyle = '#006400'; // Darker Green
 
-        const leafCount = 6;
-        for (let i = 0; i < leafCount; i++) {
-            ctx.rotate(Math.PI * 2 / leafCount);
-            drawLeaf(ctx);
-        }
+        // Add the wind effect to the whole leaf structure
+        ctx.rotate(leafAngle);
+
+        // Define leaves with more natural, asymmetrical properties
+        const leaves = [
+            { angle: 0.5, length: 90, curve: 30, width: 20 },
+            { angle: 1.5, length: 100, curve: 40, width: 25 },
+            { angle: 2.8, length: 95, curve: 35, width: 22 },
+            { angle: 4.0, length: 110, curve: 45, width: 28 },
+            { angle: 5.5, length: 85, curve: 25, width: 18 }
+        ];
+
+        leaves.forEach(leaf => {
+            ctx.save();
+            ctx.rotate(leaf.angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            // Draw a more "frond-like" shape
+            ctx.quadraticCurveTo(leaf.length / 2, leaf.curve, leaf.length, 0);
+            ctx.quadraticCurveTo(leaf.length / 2, -leaf.width, 0, 0);
+            ctx.fill();
+            ctx.restore();
+        });
 
         ctx.restore();
     }
 
-    function drawLeaf(ctx) {
-        const length = 120;
-        const width = 25;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(length / 2, width, length, 0); // Top curve
-        ctx.quadraticCurveTo(length / 2, -width / 2, 0, 0); // Bottom curve, creating a frond shape
-
-        ctx.save();
-        ctx.clip(); // Clip the drawing to the leaf shape
-
-        // Add veins to the leaf
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.lineWidth = 0.5;
-        for(let i = 1; i < length; i += 5) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0);
-            const yEnd = (i < length / 2) ? (i / (length/2)) * width : ((length - i) / (length/2)) * width;
-            ctx.lineTo(i, yEnd - Math.random() * 5);
-            ctx.stroke();
-        }
-
-        ctx.restore(); // Restore context to remove clipping path
-        ctx.fill();
-    }
-
     function drawShip() {
-        const shipY = height * 0.68;
+        const shipY = height * 0.58;
         ctx.fillStyle = '#8B4513'; // Hull color
         ctx.beginPath();
         ctx.moveTo(ship.x, shipY);
@@ -242,8 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
 
-        const shipY = height * 0.68;
+        const shipY = height * 0.58;
         const shipWidth = 100;
+        const shipHeight = 80; // from mast top to hull bottom
         const shipTop = shipY - 50;
         const shipBottom = shipY + 30;
         const shipLeft = ship.x;
@@ -251,44 +229,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (mouseX >= shipLeft && mouseX <= shipRight &&
             mouseY >= shipTop && mouseY <= shipBottom) {
-            playHonkSound();
+            playBoatHorn();
         }
     });
 
-    function playHonkSound() {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let audioContext;
+    function playBoatHorn() {
         if (!audioContext) {
-            console.error("Web Audio API is not supported in this browser.");
-            return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error("Web Audio API is not supported in this browser.");
+                return;
+            }
         }
 
         const now = audioContext.currentTime;
+        const fundamental = 110; // A2
+        const vibratoRate = 5; // 5 Hz for vibrato
+        const vibratoDepth = 3; // 3 Hz modulation depth
 
-        // First tone
-        const osc1 = audioContext.createOscillator();
-        const gain1 = audioContext.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(220, now); // A3
-        gain1.gain.setValueAtTime(0.5, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc1.connect(gain1);
-        gain1.connect(audioContext.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.4);
+        // --- Main Oscillators for Harmonics ---
+        const harmonics = [1, 1.5, 2, 3]; // Fundamental, a fifth, an octave, and another fifth
+        const oscillators = harmonics.map(harmonic => {
+            const osc = audioContext.createOscillator();
+            osc.frequency.setValueAtTime(fundamental * harmonic, now);
+            return osc;
+        });
 
-        // Second, slightly higher tone
-        const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(261.6, now + 0.1); // C4
-        gain2.gain.setValueAtTime(0.5, now + 0.1);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
-        osc2.start(now + 0.1);
-        osc2.stop(now + 0.5);
+        // --- LFO for Vibrato ---
+        const lfo = audioContext.createOscillator();
+        lfo.frequency.setValueAtTime(vibratoRate, now);
+        const lfoGain = audioContext.createGain();
+        lfoGain.gain.setValueAtTime(vibratoDepth, now);
+        lfo.connect(lfoGain);
+        oscillators.forEach(osc => lfoGain.connect(osc.frequency)); // Modulate frequency
 
-        console.log("Played honk sound."); // For verification
+        // --- Volume Envelope ---
+        const envelope = audioContext.createGain();
+        envelope.gain.setValueAtTime(0, now);
+        envelope.gain.linearRampToValueAtTime(0.4, now + 0.05); // Attack
+        envelope.gain.linearRampToValueAtTime(0.4, now + 0.8);  // Sustain
+        envelope.gain.exponentialRampToValueAtTime(0.001, now + 1.2); // Release
+
+        // --- Filter ---
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(350, now);
+        filter.Q.setValueAtTime(1, now);
+
+        // --- Distortion ---
+        const distortion = audioContext.createWaveShaper();
+        const amount = 200;
+        const n_samples = 44100;
+        const curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+            const x = i * 2 / n_samples - 1;
+            curve[i] = (3 + amount) * x * 20 * deg / (Math.PI + amount * Math.abs(x));
+        }
+        distortion.curve = curve;
+        distortion.oversample = '4x';
+
+        // --- Signal Path ---
+        oscillators.forEach(osc => osc.connect(envelope));
+        envelope.connect(distortion);
+        distortion.connect(filter);
+        filter.connect(audioContext.destination);
+
+        // --- Start & Stop ---
+        lfo.start(now);
+        lfo.stop(now + 1.2);
+        oscillators.forEach(osc => {
+            osc.start(now);
+            osc.stop(now + 1.2);
+        });
     }
 
     // --- Dynamic Board Links ---

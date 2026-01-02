@@ -65,56 +65,47 @@ class BoardTestCase(unittest.TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['content'], 'Question B')
 
-    def test_voting_and_unvoting(self):
-        # Test standard voting and unvoting
+    def test_voting(self):
+        # Add question
         board_slug = 'vote_board'
         rv = self.app.post(f'/api/{board_slug}/questions',
                            data=json.dumps({'content': 'Vote for me'}),
                            content_type='application/json')
         q_id = json.loads(rv.data)['id']
 
-        # Vote up
-        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
-                           data=json.dumps({'direction': 'up'}),
-                           content_type='application/json')
+        # Vote
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 1)
 
-        # Vote up again (should have no effect on a standard board)
-        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
-                           data=json.dumps({'direction': 'up'}),
-                           content_type='application/json')
-        self.assertEqual(rv.status_code, 200)
+        # Vote again
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote')
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 2)
 
-        # Vote down (unvote)
-        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
-                           data=json.dumps({'direction': 'down'}),
+    def test_weighted_voting_on_testing_board(self):
+        # Add question to the 'testing' board
+        rv = self.app.post('/api/testing/questions',
+                           data=json.dumps({'content': 'Weighted vote test'}),
                            content_type='application/json')
-        self.assertEqual(rv.status_code, 200)
-        data = json.loads(rv.data)
-        self.assertEqual(data['votes'], 1)
-
-        # Test unlimited voting on 'testing' board
-        board_slug = 'testing'
-        rv = self.app.post(f'/api/{board_slug}/questions',
-                           data=json.dumps({'content': 'Unlimited votes test'}),
-                           content_type='application/json')
+        self.assertEqual(rv.status_code, 201)
         q_id = json.loads(rv.data)['id']
 
-        # Vote up multiple times
-        self.app.post(f'/api/{board_slug}/questions/{q_id}/vote', data=json.dumps({}), content_type='application/json')
-        self.app.post(f'/api/{board_slug}/questions/{q_id}/vote', data=json.dumps({}), content_type='application/json')
-        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote', data=json.dumps({}), content_type='application/json')
+        # Vote once
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
-        self.assertEqual(data['votes'], 3)
+        self.assertEqual(data['votes'], 20)
+
+        # Vote again
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 40)
 
     def test_vote_non_existent_question(self):
-        rv = self.app.post('/api/any_board/questions/999/vote',
-                           data=json.dumps({}),
-                           content_type='application/json')
+        rv = self.app.post('/api/any_board/questions/999/vote')
         self.assertEqual(rv.status_code, 404)
 
     def test_fuzzy_search(self):

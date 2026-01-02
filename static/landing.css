@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Seaweed+Script&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Rye&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
 
-@keyframes float {
+@keyframes bob {
     0%, 100% {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-8px);
+        transform: translateY(-10px);
     }
 }
 
@@ -29,44 +29,48 @@ body, html {
 }
 
 #content {
-    position: relative; /* Add position context for z-index */
-    z-index: 1; /* Ensure content is above the canvas */
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: flex-start; /* Align to the top */
     height: 100%;
     text-align: center;
-    padding: 20px;
+    padding-top: 10vh; /* Push content down from the top */
     box-sizing: border-box;
-    pointer-events: none; /* Allow clicks to pass through */
+    pointer-events: none;
 }
 
 .title {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
-    font-size: 2.5em;
-    color: #A0522D;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    margin-bottom: 50px;
-    pointer-events: auto; /* Make title clickable again if needed */
+    font-family: 'Rock Salt', cursive;
+    font-size: 2.2em;
+    color: #4A2E22; /* Darker, stone-like color */
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.4);
+    margin-bottom: 20px; /* Reduced margin */
+    pointer-events: auto;
 }
 
 .boards {
-    /* No special styling needed for the container */
+    position: absolute;
+    bottom: 15vh; /* Position it in the water */
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .board-link {
-    font-family: 'Rye', cursive;
+    font-family: 'Rye', serif;
     font-size: 2.2em;
-    color: #5C4033; /* Dark Wood Brown */
+    color: #8B4513; /* SaddleBrown */
     text-decoration: none;
     margin: 0 20px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-    animation: float 4s ease-in-out infinite;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    animation: bob 5s ease-in-out infinite;
     transition: color 0.3s;
     pointer-events: auto; /* Make links clickable */
 }
 
 .board-link:hover {
-    color: #7C5845; /* Lighter Brown */
+    color: #A0522D; /* Sienna */
 }
