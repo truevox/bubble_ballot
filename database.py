@@ -49,5 +49,17 @@ def vote_question(question_id, amount=1):
     conn.close()
     return row['votes'] if row else None
 
+def get_recent_boards():
+    conn = get_db_connection()
+    boards = conn.execute('''
+        SELECT board_slug
+        FROM questions
+        GROUP BY board_slug
+        ORDER BY MAX(created_at) DESC
+        LIMIT 3
+    ''').fetchall()
+    conn.close()
+    return [dict(b)['board_slug'] for b in boards]
+
 # Initialize DB on import (safe if already exists)
 init_db()

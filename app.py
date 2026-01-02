@@ -49,6 +49,11 @@ def vote_question(board_slug, question_id):
         return jsonify({'error': 'Question not found'}), 404
     return jsonify({'votes': new_votes, 'id': question_id})
 
+@app.route('/api/boards/recent', methods=['GET'])
+def get_recent_boards():
+    boards = database.get_recent_boards()
+    return jsonify(boards)
+
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     # CEV-Forward: Respect the environment's wishes. Default to 5000 for local dev.

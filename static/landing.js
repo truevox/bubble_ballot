@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ship = {
         x: -300,
-        speed: 0.4,
+        speed: 4,
         lastAppearanceTime: -Infinity,
-        appearanceInterval: 45000 // 45 seconds
+        appearanceInterval: 1000 // 1 second
     };
 
     let waveOffset = 0;
@@ -73,32 +73,95 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawTree() {
-        const treeX = width * 0.5;
-        const treeY = height * 0.75;
+        const treeX = width * 0.6;
+        const treeY = height * 0.78;
+        const trunkHeight = 150;
+        const trunkWidth = 15;
 
         // Trunk
-        ctx.fillStyle = '#8B4513'; // Saddle Brown
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-            const segY = treeY - i * 20;
-            ctx.fillRect(treeX - 10 + Math.sin(i) * 2, segY - 20, 20, 22);
-        }
+        ctx.moveTo(treeX - trunkWidth / 2, treeY);
+        ctx.bezierCurveTo(
+            treeX - trunkWidth * 2, treeY - trunkHeight * 0.5,
+            treeX + trunkWidth * 2, treeY - trunkHeight * 0.75,
+            treeX, treeY - trunkHeight
+        );
+         ctx.lineTo(treeX + trunkWidth/2, treeY - trunkHeight);
+         ctx.bezierCurveTo(
+            treeX + trunkWidth * 2, treeY - trunkHeight * 0.75,
+            treeX - trunkWidth * 1.5, treeY - trunkHeight * 0.5,
+            treeX + trunkWidth / 2, treeY
+        );
         ctx.closePath();
+        ctx.fillStyle = '#8B5A2B'; // A more textured brown
+        ctx.fill();
+
+        // Trunk texture
+        ctx.strokeStyle = '#5C3D1E';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < trunkHeight; i += 10) {
+            const y = treeY - i;
+            const xOffset = Math.sin(i / 20) * 5;
+            ctx.beginPath();
+            ctx.moveTo(treeX - trunkWidth / 2 + xOffset, y);
+            ctx.lineTo(treeX + trunkWidth / 2 + xOffset, y - 2);
+            ctx.stroke();
+        }
+
+
+        const topX = treeX;
+        const topY = treeY - trunkHeight;
+
+        // Coconuts
+        ctx.fillStyle = '#654321';
+        for (let i = 0; i < 3; i++) {
+            const angle = i * (Math.PI * 2 / 5) + Math.PI / 4;
+            const x = topX + Math.cos(angle) * 10;
+            const y = topY + Math.sin(angle) * 10;
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         // Leaves
         ctx.save();
-        ctx.translate(treeX, treeY - 120);
+        ctx.translate(topX, topY);
         ctx.rotate(leafAngle);
-        ctx.fillStyle = '#228B22'; // Forest Green
-        for (let i = 0; i < 5; i++) {
-            ctx.rotate(Math.PI * 2 / 5);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.bezierCurveTo(40, 20, 80, -20, 120, 0);
-            ctx.bezierCurveTo(80, 20, 40, -20, 0, 0);
-            ctx.fill();
+        ctx.fillStyle = '#006400'; // Darker Green
+
+        const leafCount = 6;
+        for (let i = 0; i < leafCount; i++) {
+            ctx.rotate(Math.PI * 2 / leafCount);
+            drawLeaf(ctx);
         }
+
         ctx.restore();
+    }
+
+    function drawLeaf(ctx) {
+        const length = 120;
+        const width = 25;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(length / 2, width, length, 0); // Top curve
+        ctx.quadraticCurveTo(length / 2, -width / 2, 0, 0); // Bottom curve, creating a frond shape
+
+        ctx.save();
+        ctx.clip(); // Clip the drawing to the leaf shape
+
+        // Add veins to the leaf
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.lineWidth = 0.5;
+        for(let i = 1; i < length; i += 5) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            const yEnd = (i < length / 2) ? (i / (length/2)) * width : ((length - i) / (length/2)) * width;
+            ctx.lineTo(i, yEnd - Math.random() * 5);
+            ctx.stroke();
+        }
+
+        ctx.restore(); // Restore context to remove clipping path
+        ctx.fill();
     }
 
     function drawShip() {
@@ -152,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         waveOffset += 0.5;
         leafAngle = Math.sin(now / 1000) * 0.05;
 
+
         // Draw scene
         ctx.clearRect(0, 0, width, height);
         drawSky();
@@ -171,4 +235,96 @@ document.addEventListener('DOMContentLoaded', () => {
     ship.lastAppearanceTime = Date.now();
     // Start the animation
     animate();
+
+    // --- Interactivity ---
+    canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const shipY = height * 0.68;
+        const shipWidth = 100;
+        const shipTop = shipY - 50;
+        const shipBottom = shipY + 30;
+        const shipLeft = ship.x;
+        const shipRight = ship.x + shipWidth;
+
+        if (mouseX >= shipLeft && mouseX <= shipRight &&
+            mouseY >= shipTop && mouseY <= shipBottom) {
+            playHonkSound();
+        }
+    });
+
+    function playHonkSound() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioContext) {
+            console.error("Web Audio API is not supported in this browser.");
+            return;
+        }
+
+        const now = audioContext.currentTime;
+
+        // First tone
+        const osc1 = audioContext.createOscillator();
+        const gain1 = audioContext.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(220, now); // A3
+        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc1.connect(gain1);
+        gain1.connect(audioContext.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.4);
+
+        // Second, slightly higher tone
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(261.6, now + 0.1); // C4
+        gain2.gain.setValueAtTime(0.5, now + 0.1);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.start(now + 0.1);
+        osc2.stop(now + 0.5);
+
+        console.log("Played honk sound."); // For verification
+    }
+
+    // --- Dynamic Board Links ---
+    function updateBoardLinks() {
+        const boardsContainer = document.querySelector('.boards');
+        fetch('/api/boards/recent')
+            .then(response => response.json())
+            .then(boards => {
+                // Clear existing links
+                boardsContainer.innerHTML = '';
+
+                let boardSlugs = boards;
+                if (!boardSlugs || boardSlugs.length === 0) {
+                    // Fallback to default boards if none are returned
+                    boardSlugs = ['general', 'testing', 'whatsfordinner'];
+                }
+
+                boardSlugs.forEach(slug => {
+                    const link = document.createElement('a');
+                    link.href = `/${slug}`;
+                    link.className = 'board-link';
+                    link.textContent = `/${slug}`;
+                    boardsContainer.appendChild(link);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching recent boards:', error);
+                // Optionally, display default boards on error
+                const boardsContainer = document.querySelector('.boards');
+                boardsContainer.innerHTML = `
+                    <a href="/general" class="board-link">/general</a>
+                    <a href="/testing" class="board-link">/testing</a>
+                    <a href="/whatsfordinner" class="board-link">/whatsfordinner</a>
+                `;
+            });
+    }
+
+    updateBoardLinks();
 });
