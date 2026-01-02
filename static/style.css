@@ -171,3 +171,21 @@ button:hover {
     /* Animation is now handled in JS to keep position */
 }
 
+/* Background bubbles */
+.background-bubble {
+    position: absolute;
+    bottom: -100px; /* Start below the screen */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    animation: floatUp linear infinite;
+    z-index: 1;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) translateX(0);
+    }
+    100% {
+        transform: translateY(-120vh) translateX(20vw); /* Move up and slightly drift */
+    }
+}
