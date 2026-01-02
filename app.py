@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Please go to a board, e.g., <a href='/general'>/general</a>"
+    return render_template('landing.html')
 
 @app.route('/<board_slug>')
 def board(board_slug):
