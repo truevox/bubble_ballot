@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (oldVotes !== q.votes) {
                     voteCountSpan.textContent = q.votes;
-                    addInternalBubbles(bubble, q.votes);
+                    requestAnimationFrame(() => {
+                        addInternalBubbles(bubble, q.votes);
+                    });
                 }
             } else {
                 // Create new

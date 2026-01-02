@@ -89,6 +89,30 @@ class BoardTestCase(unittest.TestCase):
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 0)
 
+    def test_negative_voting(self):
+        # Add question
+        board_slug = 'neg_vote_board'
+        rv = self.app.post(f'/api/{board_slug}/questions',
+                           data=json.dumps({'content': 'Test negative votes'}),
+                           content_type='application/json')
+        q_id = json.loads(rv.data)['id']
+
+        # Vote down
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
+                           data=json.dumps({'direction': 'down'}),
+                           content_type='application/json')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 0)
+
+        # Vote down again
+        rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
+                           data=json.dumps({'direction': 'down'}),
+                           content_type='application/json')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 0)
+
     def test_unvoting(self):
         # Add question
         board_slug = 'unvote_board'

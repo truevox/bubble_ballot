@@ -41,7 +41,8 @@ def get_questions(board_slug):
 
 def vote_question(question_id, amount=1):
     conn = get_db_connection()
-    conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
+    # Ensure votes don't go below zero
+    conn.execute('UPDATE questions SET votes = MAX(0, votes + ?) WHERE id = ?', (amount, question_id))
     conn.commit()
 
     # Fetch updated vote count
