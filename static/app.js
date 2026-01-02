@@ -7,13 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let allQuestions = [];
 
     // Load initial questions
-    fetchAllQuestions();
+    fetchAndRenderQuestions();
 
     // Poll for updates every 5 seconds
     setInterval(() => {
         // To avoid jitter, only refresh if the user isn't actively filtering.
         if (!questionInput.value.trim()) {
-            fetchAllQuestions();
+            fetchAndRenderQuestions();
         }
     }, 5000);
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     questionInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            filterAndRenderQuestions(questionInput.value);
+            fetchAndRenderQuestions(questionInput.value);
         }, 50); // Use a shorter debounce for a more responsive feel.
     });
 
@@ -38,134 +38,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             questionInput.value = '';
-            fetchAllQuestions(); // Re-fetch to include the new question
+            fetchAndRenderQuestions(); // Re-fetch to include the new question
         } else {
             alert('Failed to submit question');
         }
     });
 
-    async function fetchAllQuestions() {
-        const url = `/api/${BOARD_SLUG}/questions`;
+    async function fetchAndRenderQuestions(query = '') {
+        let url = `/api/${BOARD_SLUG}/questions`;
+        const trimmedQuery = query.trim();
+        if (trimmedQuery) {
+            url += `?q=${encodeURIComponent(trimmedQuery)}`;
+        }
+
         try {
             const response = await fetch(url);
             if (!response.ok) {
                 console.error('Failed to fetch questions');
                 return;
             }
-            allQuestions = await response.json();
-            // After fetching, re-render the list based on the current filter
-            filterAndRenderQuestions(questionInput.value);
+            const questions = await response.json();
+            // The backend now does all the sorting and filtering.
+            // We can just render the result directly.
+            if (!trimmedQuery) {
+                // If we're not searching, update the global cache for polling.
+                allQuestions = questions;
+            }
+            renderQuestions(questions);
         } catch (error) {
             console.error('Error fetching questions:', error);
         }
-    }
-
-    function filterAndRenderQuestions(query = '') {
-        const lowerCaseQuery = query.toLowerCase().trim();
-        let questionsToRender;
-
-        if (!lowerCaseQuery) {
-            questionsToRender = [...allQuestions];
-            // Sort by votes descending for the default view
-            questionsToRender.sort((a, b) => b.votes - a.votes);
-        } else {
-            const matches = [];
-            for (const q of allQuestions) {
-                const content = q.content.toLowerCase();
-                // Prioritize exact substring matches
-                if (content.includes(lowerCaseQuery)) {
-                    matches.push({ score: 1.0, question: q });
-                } else {
-                    const distance = levenshtein(lowerCaseQuery, content);
-                    const ratio = 1 - (distance / Math.max(lowerCaseQuery.length, content.length));
-                    if (ratio > 0.6) { // Use a stricter threshold for better results
-                        matches.push({ score: ratio, question: q });
-                    }
-                }
-            }
-            // Sort by relevance score, descending
-            matches.sort((a, b) => b.score - a.score);
-            questionsToRender = matches.map(m => m.question);
-        }
-
-        renderQuestions(questionsToRender);
-    }
-
-    // Levenshtein distance function for fuzzy search
-    function levenshtein(a, b) {
-        function _min(d0, d1, d2, bx, ay) {
-            return d0 < d1 || d2 < d1 ?
-                d0 > d2 ?
-                d2 + 1 :
-                d0 + 1 :
-                bx === ay ?
-                d1 :
-                d1 + 1;
-        }
-
-        if (a === b) { return 0; }
-        if (a.length > b.length) { [a, b] = [b, a]; }
-
-        let la = a.length;
-        let lb = b.length;
-
-        while (la > 0 && (a.charCodeAt(la - 1) === b.charCodeAt(lb - 1))) {
-            la--;
-            lb--;
-        }
-
-        let offset = 0;
-        while (offset < la && (a.charCodeAt(offset) === b.charCodeAt(offset))) {
-            offset++;
-        }
-
-        la -= offset;
-        lb -= offset;
-
-        if (la === 0 || lb < 3) { return lb; }
-
-        let x = 0;
-        let y;
-        let d0, d1, d2, d3, dd, dy, ay, bx0, bx1, bx2, bx3;
-
-        const vector = [];
-        for (y = 0; y < la; y++) {
-            vector.push(y + 1, a.charCodeAt(offset + y));
-        }
-        const len = vector.length - 1;
-
-        for (; x < lb - 3;) {
-            bx0 = b.charCodeAt(offset + (d0 = x));
-            bx1 = b.charCodeAt(offset + (d1 = x + 1));
-            bx2 = b.charCodeAt(offset + (d2 = x + 2));
-            bx3 = b.charCodeAt(offset + (d3 = x + 3));
-            dd = (x += 4);
-            for (y = 0; y < len; y += 2) {
-                dy = vector[y];
-                ay = vector[y + 1];
-                d0 = _min(dy, d0, d1, bx0, ay);
-                d1 = _min(d0, d1, d2, bx1, ay);
-                d2 = _min(d1, d2, d3, bx2, ay);
-                dd = _min(d2, d3, dd, bx3, ay);
-                vector[y] = dd;
-                d3 = d2;
-                d2 = d1;
-                d1 = d0;
-                d0 = dy;
-            }
-        }
-
-        for (; x < lb;) {
-            bx0 = b.charCodeAt(offset + (d0 = x));
-            dd = ++x;
-            for (y = 0; y < len; y += 2) {
-                dy = vector[y];
-                vector[y] = dd = _min(dy, d0, dd, bx0, vector[y + 1]);
-                d0 = dy;
-            }
-        }
-
-        return dd;
     }
 
     function renderQuestions(questions) {
