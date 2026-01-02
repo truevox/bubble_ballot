@@ -26,6 +26,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let waveOffset = 0;
     let leafAngle = 0;
+    const boardLinks = [];
+    const coconuts = [];
+
+    // --- Physics Simulation ---
+    function updateLinkPhysics() {
+        const waterHeight = height * 0.4;
+        const damping = 0.98;
+
+        boardLinks.forEach(link => {
+            // Apply velocity
+            link.x += link.vx;
+            link.y += link.vy;
+
+            // Apply damping
+            link.vx *= damping;
+            link.vy *= damping;
+
+            // Boundary checks
+            if (link.x < 0) {
+                link.x = 0;
+                link.vx *= -1;
+            }
+            if (link.x + link.width > width) {
+                link.x = width - link.width;
+                link.vx *= -1;
+            }
+            if (link.y < 0) {
+                link.y = 0;
+                link.vy *= -1;
+            }
+            if (link.y + link.height > waterHeight) {
+                link.y = waterHeight - link.height;
+                link.vy *= -1;
+            }
+        });
+
+        // Collision detection
+        for (let i = 0; i < boardLinks.length; i++) {
+            for (let j = i + 1; j < boardLinks.length; j++) {
+                const linkA = boardLinks[i];
+                const linkB = boardLinks[j];
+
+                if (linkA.x < linkB.x + linkB.width &&
+                    linkA.x + linkA.width > linkB.x &&
+                    linkA.y < linkB.y + linkB.height &&
+                    linkA.y + linkA.height > linkB.y) {
+
+                    // Simple collision response: swap velocities
+                    [linkA.vx, linkB.vx] = [linkB.vx, linkA.vx];
+                    [linkA.vy, linkB.vy] = [linkB.vy, linkA.vy];
+                }
+            }
+        }
+
+        // Update DOM
+        boardLinks.forEach(link => {
+            link.el.style.left = `${link.x}px`;
+            link.el.style.top = `${link.y}px`;
+        });
+    }
+
+
+    // --- Coconut Animation ---
+    function updateCoconuts() {
+        const groundY = height * 0.7;
+        const gravity = 0.5;
+
+        for (let i = coconuts.length - 1; i >= 0; i--) {
+            const coconut = coconuts[i];
+
+            if (coconut.state === 'falling') {
+                coconut.vy += gravity;
+                coconut.y += coconut.vy;
+                if (coconut.y >= groundY - 10) {
+                    coconut.state = 'split';
+                    coconut.splitTime = Date.now();
+                    coconut.paths = [
+                        { vx: (Math.random() - 0.5) * 4, vy: -2 },
+                        { vx: (Math.random() - 0.5) * 4, vy: -2 }
+                    ];
+                }
+            } else if (coconut.state === 'split') {
+                if (Date.now() - coconut.splitTime > 200) { // Roll after a short pause
+                     coconut.state = 'rolling';
+                }
+            } else if (coconut.state === 'rolling') {
+                 coconut.paths.forEach(p => {
+                    p.vy += gravity * 0.5;
+                    coconut.x += p.vx;
+                    coconut.y += p.vy;
+                 });
+                 if (coconut.y > height) {
+                     coconuts.splice(i, 1);
+                 }
+            }
+        }
+    }
+
+     function drawCoconut(coconut) {
+        ctx.fillStyle = '#654321';
+        if (coconut.state === 'falling') {
+            ctx.beginPath();
+            ctx.arc(coconut.x, coconut.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (coconut.state === 'split' || coconut.state === 'rolling') {
+            ctx.beginPath();
+            ctx.arc(coconut.x - 5, coconut.y, 8, 0, Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(coconut.x + 5, coconut.y, 8, 0, Math.PI);
+            ctx.fill();
+        }
+    }
 
     // --- Drawing Functions ---
 
@@ -192,6 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
         waveOffset += 0.5;
         leafAngle = Math.sin(now / 1000) * 0.05;
 
+        // Update physics
+        updateLinkPhysics();
+        updateCoconuts();
 
         // Draw scene
         ctx.clearRect(0, 0, width, height);
@@ -205,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawOcean();
         drawIsland();
         drawTree();
+        coconuts.forEach(drawCoconut);
 
         requestAnimationFrame(animate);
     }
@@ -231,7 +348,31 @@ document.addEventListener('DOMContentLoaded', () => {
             mouseY >= shipTop && mouseY <= shipBottom) {
             playBoatHorn();
         }
+
+        const treeX = width * 0.65;
+        const treeY = height * 0.7;
+        const trunkHeight = 120;
+        const treeTopY = treeY - trunkHeight;
+        const treeRadius = 60; // Approximate radius of the leaves
+
+        const dist = Math.sqrt(Math.pow(mouseX - treeX, 2) + Math.pow(mouseY - treeTopY, 2));
+        if (dist < treeRadius) {
+            spawnCoconut();
+        }
     });
+
+    function spawnCoconut() {
+        const treeX = width * 0.65;
+        const treeY = height * 0.7;
+        const trunkHeight = 120;
+
+        coconuts.push({
+            x: treeX + (Math.random() - 0.5) * 30,
+            y: treeY - trunkHeight,
+            vy: 0,
+            state: 'falling'
+        });
+    }
 
     let audioContext;
     function playBoatHorn() {
@@ -314,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(boards => {
                 // Clear existing links
                 boardsContainer.innerHTML = '';
+                boardLinks.length = 0; // Clear the physics array
 
                 let boardSlugs = boards;
                 if (!boardSlugs || boardSlugs.length === 0) {
@@ -321,12 +463,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     boardSlugs = ['general', 'testing', 'whatsfordinner'];
                 }
 
-                boardSlugs.forEach(slug => {
-                    const link = document.createElement('a');
-                    link.href = `/${slug}`;
-                    link.className = 'board-link';
-                    link.textContent = `/${slug}`;
-                    boardsContainer.appendChild(link);
+                const waterHeight = height * 0.4;
+                boardSlugs.forEach((slug, index) => {
+                    const linkEl = document.createElement('a');
+                    linkEl.href = `/${slug}`;
+                    linkEl.className = 'board-link';
+                    linkEl.textContent = `/${slug}`;
+                    boardsContainer.appendChild(linkEl);
+
+                    // Initialize physics properties
+                    const link = {
+                        el: linkEl,
+                        x: Math.random() * (width - 200),
+                        y: Math.random() * (waterHeight - 100),
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        width: linkEl.offsetWidth,
+                        height: linkEl.offsetHeight
+                    };
+                    boardLinks.push(link);
                 });
             })
             .catch(error => {
