@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import random
 
 DB_NAME = "board.db"
 
@@ -41,13 +42,35 @@ def get_questions(board_slug):
 
 def vote_question(question_id, amount=1):
     conn = get_db_connection()
-    conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
+    # Ensure votes don't go below zero
+    conn.execute('UPDATE questions SET votes = MAX(0, votes + ?) WHERE id = ?', (amount, question_id))
     conn.commit()
 
     # Fetch updated vote count
     row = conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()
     conn.close()
     return row['votes'] if row else None
+
+def pre_populate_testing_board():
+    conn = get_db_connection()
+    questions_to_add = ["Should We?", "Would We?", "Why wouldn't we?"]
+
+    for content in questions_to_add:
+        # Check if the question already exists for the 'testing' board
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM questions WHERE board_slug = 'testing' AND content = ?", (content,))
+        result = cur.fetchone()
+
+        if result is None:
+            # If it doesn't exist, add it with random votes
+            votes = random.randint(0, 100)
+            cur.execute(
+                'INSERT INTO questions (board_slug, content, votes) VALUES (?, ?, ?)',
+                ('testing', content, votes)
+            )
+            conn.commit()
+
+    conn.close()
 
 # Initialize DB on import (safe if already exists)
 init_db()
