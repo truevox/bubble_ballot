@@ -137,34 +137,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleVote(id, btn, countSpan) {
+        if (btn.disabled) return; // Prevent double-clicking
+        btn.disabled = true;
+
         const hasVoted = localStorage.getItem(`voted_${id}`);
         const direction = hasVoted ? 'down' : 'up';
 
-        const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ direction: direction })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-
-            if (hasVoted) {
-                localStorage.removeItem(`voted_${id}`);
-                btn.classList.remove('voted');
-            } else {
-                localStorage.setItem(`voted_${id}`, 'true');
-                btn.classList.add('voted');
-            }
-
-            countSpan.textContent = data.votes;
-            
-            const bubble = document.getElementById(`q-${id}`);
-            // The addInternalBubbles function syncs the number of visible minibubbles
-            // to the new total vote count from the server.
-            requestAnimationFrame(() => {
-                addInternalBubbles(bubble, data.votes);
+        try {
+            const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ direction: direction })
             });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (hasVoted) {
+                    localStorage.removeItem(`voted_${id}`);
+                    btn.classList.remove('voted');
+                } else {
+                    localStorage.setItem(`voted_${id}`, 'true');
+                    btn.classList.add('voted');
+                }
+
+                countSpan.textContent = data.votes;
+
+                const bubble = document.getElementById(`q-${id}`);
+                requestAnimationFrame(() => {
+                    addInternalBubbles(bubble, data.votes);
+                });
+            }
+        } finally {
+            btn.disabled = false; // Re-enable button after request is complete
         }
     }
 
