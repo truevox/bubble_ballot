@@ -249,22 +249,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!b.physics) return;
 
                 const isPopping = b.classList.contains('popping');
+                const isCavitating = b.animation && b.animation.type === 'cavitate';
+                let transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
+                let scale = 1;
 
                 if (isPopping) {
-                    // Handle popping animation. Bubble stays in place.
-                    let transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
                     if (b.animation && b.animation.type === 'pop') {
                         const elapsed = Date.now() - b.animation.start;
                         const progress = Math.min(elapsed / b.animation.duration, 1);
-                        let scale = 1;
                         if (progress < 0.5) {
                             scale = 1 + (progress * 2) * 0.4;
                         } else {
                             scale = 1.4 - ((progress - 0.5) * 2) * 1.4;
                         }
-                        transform += ` scale(${scale})`;
                     }
-                    b.style.transform = transform;
+                } else if (isCavitating) {
+                    const elapsed = Date.now() - b.animation.start;
+                    const progress = Math.min(elapsed / b.animation.duration, 1);
+
+                    // Ease-out cubic easing for scale
+                    scale = 1 - Math.pow(1 - progress, 3);
+                    b.style.opacity = progress;
+
+                    if (progress >= 1) {
+                        b.animation = null; // End animation
+                        b.style.opacity = '1';
+                    }
                 } else {
                     // Handle normal movement
                     b.physics.x += b.physics.vx;
@@ -280,9 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (b.physics.x >= containerWidth - bubbleSize) { b.physics.x = containerWidth - bubbleSize; b.physics.vx *= -1; }
                     if (b.physics.y <= 0) { b.physics.y = 0; b.physics.vy *= -1; }
                     if (b.physics.y >= containerHeight - bubbleSize) { b.physics.y = containerHeight - bubbleSize; b.physics.vy *= -1; }
-
-                    b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
                 }
+
+                b.style.transform = `${transform} scale(${scale})`;
             });
 
             requestAnimationFrame(animate);
@@ -349,9 +359,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             vy: (Math.random() - 0.5) * velocity
                         };
 
-                        b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px)`;
-                        b.style.opacity = '1';
-                        b.classList.add('cavitate'); // Start animation now
+                        // Set up JS animation
+                        b.animation = { type: 'cavitate', start: Date.now(), duration: 300 };
+
+                        // Set initial state for animation
+                        b.style.transform = `translate(${b.physics.x}px, ${b.physics.y}px) scale(0)`;
+                        b.style.opacity = '0';
+
                     } else {
                         // If container is not visible or has no size, don't add the bubble
                         b.remove();
