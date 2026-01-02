@@ -45,8 +45,7 @@ def add_question(board_slug):
 def vote_question(board_slug, question_id):
     data = request.json or {}
     direction = data.get('direction', 'up')
-
-    amount = 1
+    amount = data.get('amount', 1)
 
     if direction == 'down':
         amount *= -1

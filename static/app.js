@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         voteBtn.innerHTML = '&#9650;'; // Up arrow
         const voteCountSpan = document.createElement('span'); // Declare here for closure
         
-        voteBtn.onclick = () => handleVote(q.id, voteBtn, voteCountSpan);
+        voteBtn.onclick = (e) => handleVote(e, q.id, voteBtn, voteCountSpan);
 
         voteCountSpan.className = 'vote-count';
         voteCountSpan.textContent = q.votes;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    async function handleVote(id, btn, countSpan) {
+    async function handleVote(e, id, btn, countSpan) {
         if (btn.disabled) return; // Prevent double-clicking
         btn.disabled = true;
 
@@ -146,11 +146,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasVoted = !isTestingBoard && localStorage.getItem(`voted_${id}`);
         const direction = hasVoted ? 'down' : 'up';
 
+        let amount = 1;
+        if (isTestingBoard) {
+            if (e.shiftKey && e.ctrlKey) {
+                amount = 100;
+            } else if (e.ctrlKey) {
+                amount = 20;
+            } else if (e.shiftKey) {
+                amount = 3;
+            }
+        }
+
         try {
             const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ direction: direction })
+                body: JSON.stringify({ direction: direction, amount: amount })
             });
 
             if (response.ok) {
@@ -287,19 +298,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let size, maxVisuals, velocity;
 
         if (count > 200) { // Churning foam
-            size = 4;
+            size = 8;
             maxVisuals = 150;
             velocity = 2.5;
         } else if (count > 100) { // Dense bubbles
-            size = 8;
+            size = 12;
             maxVisuals = 100;
             velocity = 2;
         } else if (count > 50) { // Regular bubbles
-            size = 15;
+            size = 18;
             maxVisuals = 75;
             velocity = 1.5;
         } else { // Sparse bubbles
-            size = 20;
+            size = 25;
             maxVisuals = 50;
             velocity = 1;
         }
@@ -318,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const toAdd = visualCount - currentCount;
             for (let i = 0; i < toAdd; i++) {
                 const b = document.createElement('div');
-                b.className = 'internal-bubble';
+                b.className = 'internal-bubble cavitate';
 
                 b.style.width = `${size}px`;
                 b.style.height = `${size}px`;

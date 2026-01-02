@@ -170,3 +170,18 @@ button:hover {
 .internal-bubble.popping {
     /* Animation is now handled in JS to keep position */
 }
+
+@keyframes cavitate-in {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.internal-bubble.cavitate {
+    animation: cavitate-in 0.3s ease-out forwards;
+}
