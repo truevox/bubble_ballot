@@ -73,7 +73,7 @@ class BoardTestCase(unittest.TestCase):
                            content_type='application/json')
         q_id = json.loads(rv.data)['id']
 
-        # Vote
+        # Vote up (default direction)
         rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
                            data=json.dumps({}),
                            content_type='application/json')
@@ -81,12 +81,13 @@ class BoardTestCase(unittest.TestCase):
         data = json.loads(rv.data)
         self.assertEqual(data['votes'], 1)
 
-        # Vote again
+        # Vote down (unvote)
         rv = self.app.post(f'/api/{board_slug}/questions/{q_id}/vote',
-                           data=json.dumps({}),
+                           data=json.dumps({'direction': 'down'}),
                            content_type='application/json')
+        self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
-        self.assertEqual(data['votes'], 2)
+        self.assertEqual(data['votes'], 0)
 
     def test_unvoting(self):
         # Add question
