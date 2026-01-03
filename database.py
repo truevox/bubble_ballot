@@ -72,5 +72,13 @@ def pre_populate_testing_board():
 
     conn.close()
 
+def search_questions(board_slug, query, limit=10):
+    conn = get_db_connection()
+    query = f"%{query}%"
+    questions = conn.execute('SELECT * FROM questions WHERE board_slug = ? AND content LIKE ? ORDER BY votes DESC, created_at DESC LIMIT ?',
+                             (board_slug, query, limit)).fetchall()
+    conn.close()
+    return [dict(q) for q in questions]
+
 # Initialize DB on import (safe if already exists)
 init_db()

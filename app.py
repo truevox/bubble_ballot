@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import database
-import search
 import os
 
 app = Flask(__name__)
@@ -23,11 +22,12 @@ def board(board_slug):
 
 @app.route('/api/<board_slug>/questions', methods=['GET'])
 def get_questions(board_slug):
-    questions = database.get_questions(board_slug)
     query = request.args.get('q')
     
     if query:
-        questions = search.search_questions(query, questions)
+        questions = database.search_questions(board_slug, query, limit=20)
+    else:
+        questions = database.get_questions(board_slug)
         
     return jsonify(questions)
 

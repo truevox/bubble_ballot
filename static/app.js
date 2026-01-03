@@ -4,15 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const questionsList = document.getElementById('questionsList');
 
     let debounceTimer;
+    let allQuestions = [];
 
     // Load initial questions
-    fetchQuestions();
+    fetchAndRenderQuestions();
 
     // Poll for updates every 5 seconds
     setInterval(() => {
-        // Only poll if user is not actively typing (to avoid jittering the list while searching)
+        // To avoid jitter, only refresh if the user isn't actively filtering.
         if (!questionInput.value.trim()) {
-            fetchQuestions();
+            fetchAndRenderQuestions();
         }
     }, 5000);
 
@@ -20,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     questionInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetchQuestions(questionInput.value);
-        }, 300);
+            fetchAndRenderQuestions(questionInput.value);
+        }, 50); // Use a shorter debounce for a more responsive feel.
     });
 
     // Submit new question
@@ -37,22 +38,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             questionInput.value = '';
-            fetchQuestions();
+            fetchAndRenderQuestions(); // Re-fetch to include the new question
         } else {
             alert('Failed to submit question');
         }
     });
 
-    async function fetchQuestions(query = '') {
+    async function fetchAndRenderQuestions(query = '') {
         let url = `/api/${BOARD_SLUG}/questions`;
-        if (query) {
-            url += `?q=${encodeURIComponent(query)}`;
+        const trimmedQuery = query.trim();
+        if (trimmedQuery) {
+            url += `?q=${encodeURIComponent(trimmedQuery)}`;
         }
 
-        const response = await fetch(url);
-        if (!response.ok) return;
-        const questions = await response.json();
-        renderQuestions(questions);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error('Failed to fetch questions');
+                return;
+            }
+            const questions = await response.json();
+            // The backend now does all the sorting and filtering.
+            // We can just render the result directly.
+            if (!trimmedQuery) {
+                // If we're not searching, update the global cache for polling.
+                allQuestions = questions;
+            }
+            renderQuestions(questions);
+        } catch (error) {
+            console.error('Error fetching questions:', error);
+        }
     }
 
     function renderQuestions(questions) {
@@ -95,12 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Remove questions that are no longer in the list (e.g. filtered out)
-        // We iterate over children of questionsList
+        // Animate out and remove questions that are no longer in the list
         Array.from(questionsList.children).forEach(child => {
             const id = parseInt(child.id.replace('q-', ''));
             if (!currentIds.has(id)) {
-                child.remove();
+                child.classList.add('popping');
+                setTimeout(() => {
+                    child.remove();
+                }, 300); // Animation duration is 0.3s
             }
         });
     }
