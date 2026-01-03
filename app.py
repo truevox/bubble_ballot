@@ -6,13 +6,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Please go to a board, e.g., <a href='/general'>/general</a>"
+    return render_template('landing.html')
 
 @app.route('/<board_slug>')
 def board(board_slug):
-    if board_slug == 'testing':
-        database.pre_populate_testing_board()
-
     try:
         with open('VERSION', 'r') as f:
             version = f.read().strip()
@@ -43,17 +40,19 @@ def add_question(board_slug):
 
 @app.route('/api/<board_slug>/questions/<int:question_id>/vote', methods=['POST'])
 def vote_question(board_slug, question_id):
-    data = request.json or {}
-    direction = data.get('direction', 'up')
-    amount = data.get('amount', 1)
-
-    if direction == 'down':
-        amount *= -1
-
+    if board_slug == 'testing':
+        amount = 20
+    else:
+        amount = 1
     new_votes = database.vote_question(question_id, amount)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
     return jsonify({'votes': new_votes, 'id': question_id})
+
+@app.route('/api/boards/recent', methods=['GET'])
+def get_recent_boards():
+    boards = database.get_recent_boards()
+    return jsonify(boards)
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
