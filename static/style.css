@@ -196,8 +196,6 @@ button:hover {
     z-index: 100;
 }
 
-.bubble.popping {
-    animation: pop 0.3s ease-out forwards;
 .internal-bubble.popping {
     animation: pop 0.3s ease-out forwards;
 }
@@ -216,24 +214,3 @@ button:hover {
         opacity: 0;
     }
 }
-
-/* Background bubbles */
-.background-bubble {
-    position: absolute;
-    bottom: -100px; /* Start below the screen */
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 50%;
-    animation: floatUp linear infinite;
-    z-index: 1;
-}
-
-@keyframes floatUp {
-    0% {
-        transform: translateY(0) translateX(0);
-    }
-    100% {
-        transform: translateY(-120vh) translateX(20vw); /* Move up and slightly drift */
-    }
-}
-
-/* --- Landing Page Specific Styles --- */

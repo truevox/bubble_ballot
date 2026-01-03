@@ -2,16 +2,13 @@ import unittest
 import os
 import tempfile
 import database
+import search
 
 class DatabaseTestCase(unittest.TestCase):
     def setUp(self):
         # Create a temporary database
         self.db_fd, database.DB_NAME = tempfile.mkstemp()
         database.init_db()
-        # Add some test data
-        database.add_question('search_board', 'Apple')
-        database.add_question('search_board', 'Application')
-        database.add_question('search_board', 'Banana')
 
     def tearDown(self):
         os.close(self.db_fd)
@@ -61,35 +58,39 @@ class DatabaseTestCase(unittest.TestCase):
         new_votes = database.vote_question(999)
         self.assertIsNone(new_votes)
 
+class SearchTestCase(unittest.TestCase):
     def test_search_questions(self):
-        # Partial match should return multiple results
-        results = database.search_questions('search_board', 'App')
+        questions = [
+            {'content': 'Apple', 'id': 1},
+            {'content': 'Banana', 'id': 2},
+            {'content': 'Application', 'id': 3},
+            {'content': 'Cranberry', 'id': 4}
+        ]
+
+        # "Exact" match (substring and fuzzy)
+        results = search.search_questions('Apple', questions)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]['content'], 'Apple')
+        self.assertEqual(results[1]['content'], 'Application')
+
+        # Partial match
+        results = search.search_questions('App', questions)
         self.assertEqual(len(results), 2)
         contents = {q['content'] for q in results}
-        self.assertIn('Apple', contents)
-        self.assertIn('Application', contents)
+        self.assertEqual(contents, {'Apple', 'Application'})
 
-        # Exact match should return one result
-        results = database.search_questions('search_board', 'Apple')
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]['content'], 'Apple')
-
-        # Another partial match
-        results = database.search_questions('search_board', 'Banana')
+        # Fuzzy match
+        results = search.search_questions('Bana', questions)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['content'], 'Banana')
 
         # No match
-        results = database.search_questions('search_board', 'Zebra')
+        results = search.search_questions('Zebra', questions)
         self.assertEqual(len(results), 0)
 
-        # Empty query should return all questions for the board
-        results = database.search_questions('search_board', '')
-        self.assertEqual(len(results), 3)
-
-        # Test limit parameter
-        results = database.search_questions('search_board', 'App', limit=1)
-        self.assertEqual(len(results), 1)
+        # Empty query
+        results = search.search_questions('', questions)
+        self.assertEqual(len(results), 4)
 
 if __name__ == '__main__':
     unittest.main()

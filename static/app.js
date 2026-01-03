@@ -5,33 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const questionsList = document.getElementById('questionsList');
 
     let debounceTimer;
-    let allQuestions = [];
-    
-    // DEFINITIONS NEEDED FOR THE REST OF YOUR FILE
     let pollTimer;
     let isAnimating = false;
 
     function startPolling() {
-        clearTimeout(pollTimer); 
+        clearTimeout(pollTimer); // Ensure no multiple loops
         pollTimer = setTimeout(async () => {
             // Only poll if user is not actively typing and no animation is running
             if (!questionInput.value.trim() && !isAnimating) {
-                await fetchAndRenderQuestions();
+                await fetchQuestions();
             }
-            startPolling(); // Loop
+            startPolling(); // Schedule the next one
         }, 5000);
     }
 
-    // Load initial questions and kick off the polling loop
-    fetchAndRenderQuestions();
+    // Load initial questions and start polling
+    fetchQuestions();
     startPolling();
 
     // Search/Filter as user types
     questionInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetchAndRenderQuestions(questionInput.value);
-        }, 50); // Use a shorter debounce for a more responsive feel.
+            fetchQuestions(questionInput.value);
+        }, 300);
     });
 
     // Submit new question
@@ -49,37 +46,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             questionInput.value = '';
-            fetchAndRenderQuestions(); // Re-fetch to include the new question
+            await fetchQuestions(); // Get immediate update
+            startPolling(); // Restart polling
         } else {
             alert('Failed to submit question');
             startPolling(); // Restart polling even on failure
         }
     });
 
-    async function fetchAndRenderQuestions(query = '') {
+    async function fetchQuestions(query = '') {
         let url = `/api/${BOARD_SLUG}/questions`;
-        const trimmedQuery = query.trim();
-        if (trimmedQuery) {
-            url += `?q=${encodeURIComponent(trimmedQuery)}`;
+        if (query) {
+            url += `?q=${encodeURIComponent(query)}`;
         }
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.error('Failed to fetch questions');
-                return;
-            }
-            const questions = await response.json();
-            // The backend now does all the sorting and filtering.
-            // We can just render the result directly.
-            if (!trimmedQuery) {
-                // If we're not searching, update the global cache for polling.
-                allQuestions = questions;
-            }
-            renderQuestions(questions);
-        } catch (error) {
-            console.error('Error fetching questions:', error);
-        }
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const questions = await response.json();
+        renderQuestions(questions);
     }
 
     function renderQuestions(questions) {
@@ -123,14 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Animate out and remove questions that are no longer in the list
-        Array.from(questionsList.children).forEach(child => {
-            const id = parseInt(child.id.replace('q-', ''));
-            if (!currentIds.has(id)) {
-                child.classList.add('popping');
-                setTimeout(() => {
-                    child.remove();
-                }, 300); // Animation duration is 0.3s
+        // Put all bubbles in their correct final order.
+        questions.forEach((q, index) => {
+            const bubble = document.getElementById(`q-${q.id}`);
+            const currentChild = parent.children[index];
+            if (currentChild !== bubble) {
+                parent.insertBefore(bubble, currentChild || null);
             }
         });
 
@@ -231,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleVote(id, btn, countSpan) {
         if (localStorage.getItem(`voted_${id}`)) return;
 
-        // NOTE: Ensure 'pollTimer' is defined in your top-level variables
         clearTimeout(pollTimer); // Stop polling during vote
 
         const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
@@ -243,13 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('voted');
             btn.disabled = true;
             
-            // RESOLUTION: Use Jules logic to trigger animation, but fix the function name
-            await fetchAndRenderQuestions(); 
-            
-            // NOTE: This requires the 'startPolling' function to be defined (from the previous conflict)
-            startPolling(); 
+            await fetchQuestions(); // This will re-render and animate
+            startPolling(); // Restart polling
         } else {
-            startPolling(); 
+            startPolling(); // Restart polling even on failure
         }
     }
 
@@ -303,15 +281,15 @@ document.addEventListener('DOMContentLoaded', () => {
         startAnimationLoop();
 
         let count = voteCount;
-        let size = 20;
-
+        let size = 20; 
+        
         if (count > 100) {
             size = 5;
         } else if (count > 50) {
             size = 10;
         }
 
-        const maxVisuals = 50;
+        const maxVisuals = 50; 
         const visualCount = Math.min(count, maxVisuals);
 
         const currentBubbles = Array.from(container.querySelectorAll('.internal-bubble:not(.popping)'));
@@ -358,30 +336,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
-    function createBackgroundBubbles() {
-        const ocean = document.querySelector('.ocean');
-        const bubbleCount = 20;
-
-        for (let i = 0; i < bubbleCount; i++) {
-            const bubble = document.createElement('div');
-            bubble.className = 'background-bubble';
-
-            const size = Math.random() * 60 + 20; // 20px to 80px
-            bubble.style.width = `${size}px`;
-            bubble.style.height = `${size}px`;
-
-            bubble.style.left = `${Math.random() * 100}vw`;
-
-            const duration = Math.random() * 20 + 15; // 15s to 35s
-            bubble.style.animationDuration = `${duration}s`;
-
-            const delay = Math.random() * 10; // 0s to 10s
-            bubble.style.animationDelay = `${delay}s`;
-
-            ocean.appendChild(bubble);
-        }
-    }
-
-    createBackgroundBubbles();
 });
