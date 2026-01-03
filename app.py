@@ -7,7 +7,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Please go to a board, e.g., <a href='/general'>/general</a>"
+    try:
+        with open('VERSION', 'r') as f:
+            version = f.read().strip()
+    except FileNotFoundError:
+        version = 'dev'
+    return render_template('landing.html', version=version)
+
 
 @app.route('/<board_slug>')
 def board(board_slug):
@@ -38,12 +44,20 @@ def add_question(board_slug):
     new_id = database.add_question(board_slug, content)
     return jsonify({'id': new_id, 'status': 'success'}), 201
 
+@app.route('/api/boards/recent', methods=['GET'])
+def get_recent_boards():
+    boards = database.get_recent_boards()
+    return jsonify(boards)
+
 @app.route('/api/<board_slug>/questions/<int:question_id>/vote', methods=['POST'])
 def vote_question(board_slug, question_id):
-    if board_slug == 'testing':
-        amount = 20
-    else:
-        amount = 1
+    data = request.json or {}
+    amount = data.get('amount', 1)
+    direction = data.get('direction', 'up')
+
+    if direction == 'down':
+        amount *= -1
+
     new_votes = database.vote_question(question_id, amount)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404

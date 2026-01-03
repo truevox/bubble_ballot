@@ -195,8 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
         voteBtn.innerHTML = '&#9650;'; // Up arrow
         const voteCountSpan = document.createElement('span'); // Declare here for closure
         
-        voteBtn.onclick = () => handleVote(q.id, voteBtn, voteCountSpan);
-        if (hasVoted) voteBtn.disabled = true;
+        voteBtn.onclick = (e) => handleVote(q.id, voteBtn, voteCountSpan, e);
+        if (hasVoted && BOARD_SLUG !== 'testing') {
+             voteBtn.disabled = true;
+        }
 
         voteCountSpan.className = 'vote-count';
         voteCountSpan.textContent = q.votes;
@@ -210,24 +212,67 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    async function handleVote(id, btn, countSpan) {
-        if (localStorage.getItem(`voted_${id}`)) return;
+    async function handleVote(id, btn, countSpan, event) {
+        let amount = 1;
+        let direction = 'up';
+        const hasVoted = localStorage.getItem(`voted_${id}`);
+
+        // Special /testing board logic
+        if (BOARD_SLUG === 'testing') {
+            if (event.shiftKey && event.ctrlKey) {
+                amount = 100;
+            } else if (event.ctrlKey) {
+                amount = 20;
+            } else if (event.shiftKey) {
+                amount = 3;
+            }
+
+            if (event.altKey) {
+                if (hasVoted) {
+                    direction = 'down'; // Unvote
+                }
+            } else {
+                if (hasVoted) return; // Standard behavior: no re-voting
+            }
+        } else {
+            // Standard board logic
+            if (hasVoted) return;
+        }
 
         clearTimeout(pollTimer); // Stop polling during vote
+        btn.disabled = true; // Disable button to prevent spam
 
-        const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
-            method: 'POST'
-        });
+        try {
+            const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: amount,
+                    direction: direction
+                })
+            });
 
-        if (response.ok) {
-            localStorage.setItem(`voted_${id}`, 'true');
-            btn.classList.add('voted');
-            btn.disabled = true;
-            
-            await fetchQuestions(); // This will re-render and animate
-            startPolling(); // Restart polling
-        } else {
-            startPolling(); // Restart polling even on failure
+            if (response.ok) {
+                // Update local storage for visual feedback
+                if (direction === 'down') {
+                    localStorage.removeItem(`voted_${id}`);
+                    btn.classList.remove('voted');
+                } else {
+                    localStorage.setItem(`voted_${id}`, 'true');
+                    btn.classList.add('voted');
+                }
+
+                await fetchQuestions(); // This will re-render and animate
+            }
+        } finally {
+            // Re-enable the button and restart polling regardless of outcome
+            if (BOARD_SLUG !== 'testing' && localStorage.getItem(`voted_${id}`)) {
+               // Keep it disabled on normal boards after a successful vote
+               btn.disabled = true;
+            } else {
+               btn.disabled = false;
+            }
+            startPolling();
         }
     }
 
