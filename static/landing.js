@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ship = {
         x: -300,
-        speed: 4,
+        speed: 2, // Slower speed
         lastAppearanceTime: -Infinity,
-        appearanceInterval: 1000 // 1 second
+        appearanceInterval: 2000 // Appear half as often
     };
 
     let waveOffset = 0;
@@ -89,22 +89,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 link.vy -= 2 * dotProduct * normal.y;
             }
 
-            // Boundary checks for the water area
+            // AABB collision detection for rotated boxes
             const waterTop = height * 0.6;
-            if (link.x < 0) {
-                link.x = 0;
+            const w = link.width;
+            const h = link.height;
+            const cx = link.x + w / 2;
+            const cy = link.y + h / 2;
+            const angle = link.angle;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            const corners = [
+                { x: -w / 2, y: -h / 2 }, { x: w / 2, y: -h / 2 },
+                { x: w / 2, y: h / 2 }, { x: -w / 2, y: h / 2 }
+            ];
+
+            const rotatedCorners = corners.map(p => ({
+                x: cx + p.x * cos - p.y * sin,
+                y: cy + p.x * sin + p.y * cos
+            }));
+
+            const minX = Math.min(...rotatedCorners.map(p => p.x));
+            const maxX = Math.max(...rotatedCorners.map(p => p.x));
+            const minY = Math.min(...rotatedCorners.map(p => p.y));
+            const maxY = Math.max(...rotatedCorners.map(p => p.y));
+
+            if (minX < 0) {
+                link.x += -minX;
                 link.vx *= -1;
             }
-            if (link.x + link.width > width) {
-                link.x = width - link.width;
+            if (maxX > width) {
+                link.x -= (maxX - width);
                 link.vx *= -1;
             }
-            if (link.y < waterTop) { // Prevent going above the water
-                link.y = waterTop;
+            if (minY < waterTop) {
+                link.y += (waterTop - minY);
                 link.vy *= -1;
             }
-            if (link.y + link.height > height) { // Prevent going below the screen
-                link.y = height - link.height;
+            if (maxY > height) {
+                link.y -= (maxY - height);
                 link.vy *= -1;
             }
         });
@@ -450,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function spawnCoconut() {
+        initAudio(); // Ensure the audio context is created on user gesture
         playCoconutFallSound();
         const treeX = width * 0.65;
         const treeY = height * 0.7;
