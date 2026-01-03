@@ -1,22 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Rye&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
-
-@keyframes bob {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
 body, html {
     margin: 0;
     padding: 0;
-    width: 100%;
     height: 100%;
-    overflow: hidden;
-    /* Sky blue fallback removed to allow canvas to be visible */
+    overflow: hidden; /* Prevent scrollbars from canvas overflow */
 }
 
 #canvas {
@@ -25,55 +11,53 @@ body, html {
     left: 0;
     width: 100%;
     height: 100%;
-    /* z-index: -1; <-- This was causing the body to intercept clicks */
+    z-index: 1; /* Behind content but clickable */
 }
 
 #content {
     position: relative;
-    z-index: 1;
+    z-index: 2; /* Content on top of canvas */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Align to the top */
+    justify-content: center;
     height: 100%;
-    text-align: center;
-    padding-top: 10vh; /* Push content down from the top */
-    box-sizing: border-box;
-    pointer-events: none;
+    pointer-events: none; /* Allow clicks to pass through to canvas */
 }
 
 .title {
     font-family: 'Rock Salt', cursive;
-    font-size: 2.2em;
-    color: #4A2E22; /* Darker, stone-like color */
-    text-shadow: 2px 2px 3px rgba(0,0,0,0.4);
-    margin-bottom: 20px; /* Reduced margin */
-    pointer-events: auto;
+    font-size: 3em;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    margin-bottom: 200px; /* Give space for the boards */
 }
 
 .boards {
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
     width: 100%;
-    height: 40vh; /* Water area */
-    pointer-events: none; /* Container doesn't intercept clicks */
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    pointer-events: none; /* The container itself is not interactive */
 }
 
 .board-link {
-    position: absolute; /* Needed for JS positioning */
-    font-family: 'Rye', serif;
-    font-size: 2.2em;
-    color: #8B4513; /* SaddleBrown */
+    position: absolute;
+    font-family: 'Rye', cursive;
+    font-size: 2.5em;
+    color: #E2A76F; /* A sandy color */
     text-decoration: none;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    animation: bob 5s ease-in-out infinite;
-    transition: color 0.3s;
-    pointer-events: auto; /* Make links clickable */
     padding: 10px;
-    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: auto; /* Links are interactive */
+    transition: transform 0.2s ease;
 }
 
 .board-link:hover {
-    color: #A0522D; /* Sienna */
+    transform: scale(1.1);
+    color: #FFC98B;
 }
