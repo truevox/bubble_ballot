@@ -12,9 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Animation State ---
     const clouds = [
-        { x: width * 0.1, y: height * 0.15, size: 60, speed: 0.2 },
-        { x: width * 0.5, y: height * 0.25, size: 80, speed: 0.3 },
-        { x: width * 0.8, y: height * 0.1, size: 70, speed: 0.25 }
+        { x: width * 0.1, y: height * 0.05, size: 60, speed: 0.2 },
+        { x: width * 0.5, y: height * 0.15, size: 80, speed: 0.3 },
+        { x: width * 0.8, y: height * 0.05, size: 70, speed: 0.25 }
     ];
 
     const SHIP_APPEARANCE_INTERVAL_MS = 2000;
@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let leafAngle = 0;
     const boardLinks = [];
     const coconuts = [];
+    
+    // Speech bubble state for boat horn
+    let speechBubble = {
+        visible: false,
+        showTime: 0,
+        duration: 1200 // Match horn duration
+    };
 
     // --- Physics Simulation ---
     function updateLinkPhysics() {
@@ -63,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Island collision
             const islandCX = width * 0.5;
-            const islandCY = height * 0.7;
+            const islandCY = height * 0.55;
             const islandRX = width * 0.25;
             const islandRY = height * 0.1;
 
@@ -91,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // AABB collision detection for rotated boxes
-            const waterTop = height * 0.6;
+            const waterTop = height * 0.45;
             const w = link.width;
             const h = link.height;
             const cx = link.x + w / 2;
@@ -133,20 +140,49 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Collision detection
+        // Collision detection between boards
         for (let i = 0; i < boardLinks.length; i++) {
             for (let j = i + 1; j < boardLinks.length; j++) {
                 const linkA = boardLinks[i];
                 const linkB = boardLinks[j];
 
+                // Calculate centers
+                const aCenterX = linkA.x + linkA.width / 2;
+                const aCenterY = linkA.y + linkA.height / 2;
+                const bCenterX = linkB.x + linkB.width / 2;
+                const bCenterY = linkB.y + linkB.height / 2;
+
+                // Check AABB collision
                 if (linkA.x < linkB.x + linkB.width &&
                     linkA.x + linkA.width > linkB.x &&
                     linkA.y < linkB.y + linkB.height &&
                     linkA.y + linkA.height > linkB.y) {
 
-                    // Simple collision response: swap velocities
-                    [linkA.vx, linkB.vx] = [linkB.vx, linkA.vx];
-                    [linkA.vy, linkB.vy] = [linkB.vy, linkA.vy];
+                    // Calculate overlap
+                    const dx = bCenterX - aCenterX;
+                    const dy = bCenterY - aCenterY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        // Normalize direction
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+
+                        // Separate the boards
+                        const overlapX = (linkA.width + linkB.width) / 2 - Math.abs(dx);
+                        const overlapY = (linkA.height + linkB.height) / 2 - Math.abs(dy);
+                        const separation = Math.min(overlapX, overlapY) * 0.5;
+
+                        linkA.x -= nx * separation;
+                        linkA.y -= ny * separation;
+                        linkB.x += nx * separation;
+                        linkB.y += ny * separation;
+
+                        // Bounce velocities with some energy loss
+                        const restitution = 0.8;
+                        [linkA.vx, linkB.vx] = [linkB.vx * restitution, linkA.vx * restitution];
+                        [linkA.vy, linkB.vy] = [linkB.vy * restitution, linkA.vy * restitution];
+                    }
                 }
             }
         }
@@ -162,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Coconut Animation ---
     function updateCoconuts() {
-        const groundY = height * 0.7;
+        const groundY = height * 0.55;
         const gravity = 0.5;
 
         for (let i = coconuts.length - 1; i >= 0; i--) {
@@ -237,10 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawOcean() {
         ctx.fillStyle = '#006994'; // Sea Blue
         ctx.beginPath();
-        ctx.moveTo(0, height * 0.6);
+        ctx.moveTo(0, height * 0.45);
         for (let x = 0; x < width; x++) {
             const y = Math.sin((x + waveOffset) * 0.01) * 10 + Math.sin((x + waveOffset) * 0.02) * 5;
-            ctx.lineTo(x, height * 0.6 + y);
+            ctx.lineTo(x, height * 0.45 + y);
         }
         ctx.lineTo(width, height);
         ctx.lineTo(0, height);
@@ -251,16 +287,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawIsland() {
         ctx.fillStyle = '#F4A460'; // Sandy Brown
         ctx.beginPath();
-        ctx.moveTo(width * 0.25, height * 0.7);
-        ctx.bezierCurveTo(width * 0.3, height * 0.6, width * 0.7, height * 0.6, width * 0.75, height * 0.75);
-        ctx.bezierCurveTo(width * 0.7, height * 0.8, width * 0.3, height * 0.8, width * 0.25, height * 0.7);
+        ctx.moveTo(width * 0.25, height * 0.55);
+        ctx.bezierCurveTo(width * 0.3, height * 0.45, width * 0.7, height * 0.45, width * 0.75, height * 0.6);
+        ctx.bezierCurveTo(width * 0.7, height * 0.65, width * 0.3, height * 0.65, width * 0.25, height * 0.55);
         ctx.closePath();
         ctx.fill();
     }
 
     function drawTree() {
         const treeX = width * 0.65;
-        const treeY = height * 0.7;
+        const treeY = height * 0.55;
         const trunkHeight = 120;
         const trunkWidth = 10;
 
@@ -327,8 +363,72 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
+    function drawSpeechBubble() {
+        if (!speechBubble.visible) return;
+
+        const shipY = height * 0.43;
+        const bubbleX = ship.x + 50; // Center of ship
+        const bubbleY = shipY - 70; // Above the ship
+        const bubbleWidth = 60;
+        const bubbleHeight = 50;
+
+        // Draw speech bubble background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+
+        // Main bubble
+        ctx.beginPath();
+        ctx.ellipse(bubbleX, bubbleY, bubbleWidth / 2, bubbleHeight / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Tail of speech bubble
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.beginPath();
+        ctx.moveTo(bubbleX - 10, bubbleY + 15);
+        ctx.lineTo(bubbleX - 5, bubbleY + 30);
+        ctx.lineTo(bubbleX + 5, bubbleY + 15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw bell/whistle icon
+        ctx.fillStyle = '#333';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+
+        // Draw a simple bell
+        ctx.beginPath();
+        ctx.moveTo(bubbleX - 10, bubbleY - 5);
+        ctx.quadraticCurveTo(bubbleX - 10, bubbleY - 15, bubbleX, bubbleY - 15);
+        ctx.quadraticCurveTo(bubbleX + 10, bubbleY - 15, bubbleX + 10, bubbleY - 5);
+        ctx.lineTo(bubbleX + 8, bubbleY + 5);
+        ctx.lineTo(bubbleX - 8, bubbleY + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bell clapper
+        ctx.beginPath();
+        ctx.arc(bubbleX, bubbleY + 8, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sound waves
+        const elapsed = Date.now() - speechBubble.showTime;
+        const waveOpacity = Math.max(0, 1 - elapsed / speechBubble.duration);
+        ctx.strokeStyle = `rgba(51, 51, 51, ${waveOpacity})`;
+        ctx.lineWidth = 1.5;
+        
+        for (let i = 1; i <= 3; i++) {
+            const offset = (elapsed * 0.1 + i * 10) % 30;
+            ctx.beginPath();
+            ctx.arc(bubbleX + 15, bubbleY - 10, offset, -Math.PI / 4, Math.PI / 4);
+            ctx.stroke();
+        }
+    }
+
     function drawShip() {
-        const shipY = height * 0.58;
+        const shipY = height * 0.43;
         ctx.fillStyle = '#8B4513'; // Hull color
         ctx.beginPath();
         ctx.moveTo(ship.x, shipY);
@@ -378,6 +478,11 @@ document.addEventListener('DOMContentLoaded', () => {
         waveOffset += 0.5;
         leafAngle = Math.sin(now / 1000) * 0.05;
 
+        // Update speech bubble visibility
+        if (speechBubble.visible && now - speechBubble.showTime > speechBubble.duration) {
+            speechBubble.visible = false;
+        }
+
         // Update physics
         updateLinkPhysics();
         updateCoconuts();
@@ -389,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (now > ship.lastAppearanceTime + ship.appearanceInterval || ship.x > -300 && ship.x < width + 150) {
             drawShip();
+            drawSpeechBubble();
         }
 
         drawOcean();
@@ -409,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
 
-        const shipY = height * 0.58;
+        const shipY = height * 0.43;
         const shipWidth = 100;
         // shipHeight variable removed as it was unused
         const shipTop = shipY - 50;
@@ -423,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const treeX = width * 0.65;
-        const treeY = height * 0.7;
+        const treeY = height * 0.55;
         const trunkHeight = 120;
         const treeTopY = treeY - trunkHeight;
         const treeRadius = 60; // Approximate radius of the leaves
@@ -477,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initAudio(); // Ensure the audio context is created on user gesture
         playCoconutFallSound();
         const treeX = width * 0.65;
-        const treeY = height * 0.7;
+        const treeY = height * 0.55;
         const trunkHeight = 120;
 
         coconuts.push({
@@ -572,6 +678,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const horn = SoundFactory.createBoatHorn(audioContext);
             horn.play();
         }
+        // Show speech bubble
+        speechBubble.visible = true;
+        speechBubble.showTime = Date.now();
     }
 
     // --- Dynamic Board Links ---
@@ -608,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Now that we have dimensions, calculate a valid starting position
                 do {
                     link.x = Math.random() * (width - link.width);
-                    link.y = height * 0.6 + Math.random() * (height * 0.4 - link.height);
+                    link.y = height * 0.45 + Math.random() * (height * 0.55 - link.height);
                 } while (isCollidingWithIsland(link));
 
                 // Initialize the rest of the physics properties
@@ -637,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function isCollidingWithIsland(link) {
         const islandCX = width * 0.5;
-        const islandCY = height * 0.7;
+        const islandCY = height * 0.55;
         const islandRX = width * 0.25;
         const islandRY = height * 0.1;
 

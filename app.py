@@ -40,10 +40,17 @@ def add_question(board_slug):
 
 @app.route('/api/<board_slug>/questions/<int:question_id>/vote', methods=['POST'])
 def vote_question(board_slug, question_id):
-    if board_slug == 'testing':
-        amount = 20
+    # Handle both JSON and non-JSON requests
+    if request.is_json:
+        data = request.json
+        amount = data.get('amount', 1) if data else 1
     else:
         amount = 1
+    
+    # Validate amount to prevent abuse
+    if not isinstance(amount, int) or amount < 1 or amount > 100:
+        amount = 1
+    
     new_votes = database.vote_question(question_id, amount)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
