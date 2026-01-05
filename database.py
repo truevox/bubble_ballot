@@ -41,18 +41,19 @@ def get_questions(board_slug):
 
 def vote_question(question_id, amount=1, board_slug=None):
     conn = get_db_connection()
+    update_query = 'UPDATE questions SET votes = votes + ? WHERE id = ?'
+    select_query = 'SELECT votes FROM questions WHERE id = ?'
+    update_params = (amount, question_id)
+    select_params = (question_id,)
+
     if board_slug:
-        conn.execute(
-            'UPDATE questions SET votes = votes + ? WHERE id = ? AND board_slug = ?',
-            (amount, question_id, board_slug)
-        )
-        row = conn.execute(
-            'SELECT votes FROM questions WHERE id = ? AND board_slug = ?',
-            (question_id, board_slug)
-        ).fetchone()
-    else:
-        conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
-        row = conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()
+        update_query += ' AND board_slug = ?'
+        select_query += ' AND board_slug = ?'
+        update_params += (board_slug,)
+        select_params += (board_slug,)
+
+    conn.execute(update_query, update_params)
+    row = conn.execute(select_query, select_params).fetchone()
     conn.commit()
     conn.close()
     return row['votes'] if row else None
