@@ -404,7 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Interactivity ---
     canvas.addEventListener('click', (event) => {
-        console.log('Canvas clicked!');
         const rect = canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
@@ -428,12 +427,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const treeTopY = treeY - trunkHeight;
         const treeRadius = 60; // Approximate radius of the leaves
 
-        console.log(`Mouse coordinates: (${mouseX}, ${mouseY})`);
-        console.log(`Tree top coordinates: (${treeX}, ${treeTopY})`);
         const dist = Math.sqrt(Math.pow(mouseX - treeX, 2) + Math.pow(mouseY - treeTopY, 2));
-        console.log(`Distance from tree top: ${dist}`);
         if (dist < treeRadius) {
-            console.log('Coconut clicked!');
             spawnCoconut();
         }
     });

@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             questionInput.value = '';
-            fetchAndRenderQuestions(); // Re-fetch to include the new question
+            await fetchAndRenderQuestions(); // Re-fetch to include the new question
+            startPolling(); // Resume polling after successful submission
         } else {
             alert('Failed to submit question');
             startPolling(); // Restart polling even on failure
@@ -123,23 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Animate out and remove questions that are no longer in the list
+        // Remove questions that are no longer in the list
         Array.from(questionsList.children).forEach(child => {
-            const id = parseInt(child.id.replace('q-', ''));
-            if (!currentIds.has(id)) {
+            if (!currentIds.has(child.id)) {
                 child.classList.add('popping');
                 setTimeout(() => {
                     child.remove();
-                }, 300); // Animation duration is 0.3s
-            }
-        });
-
-        // Mark old bubbles for removal
-        Array.from(parent.children).forEach(child => {
-            if (!currentIds.has(child.id)) {
-                child.classList.add('bubble-stale');
-                // Remove from DOM after transition
-                setTimeout(() => child.remove(), 200);
+                }, 300);
             }
         });
 

@@ -198,6 +198,8 @@ button:hover {
 
 .bubble.popping {
     animation: pop 0.3s ease-out forwards;
+}
+
 .internal-bubble.popping {
     animation: pop 0.3s ease-out forwards;
 }
@@ -223,11 +225,11 @@ button:hover {
     bottom: -100px; /* Start below the screen */
     background: rgba(255, 255, 255, 0.05);
     border-radius: 50%;
-    animation: floatUp linear infinite;
+    animation: floatUpBackground linear infinite;
     z-index: 1;
 }
 
-@keyframes floatUp {
+@keyframes floatUpBackground {
     0% {
         transform: translateY(0) translateX(0);
     }
