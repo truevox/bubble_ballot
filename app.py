@@ -3,6 +3,7 @@ import database
 import os
 
 app = Flask(__name__)
+MAX_QUESTION_LENGTH = 500
 
 @app.route('/')
 def index():
@@ -19,7 +20,7 @@ def board(board_slug):
 
 @app.route('/api/<board_slug>/questions', methods=['GET'])
 def get_questions(board_slug):
-    query = request.args.get('q')
+    query = request.args.get('q', '').strip()
     
     if query:
         questions = database.search_questions(board_slug, query, limit=20)
@@ -30,10 +31,15 @@ def get_questions(board_slug):
 
 @app.route('/api/<board_slug>/questions', methods=['POST'])
 def add_question(board_slug):
-    data = request.json
-    content = data.get('content')
+    data = request.get_json(silent=True) or {}
+    content = data.get('content', '')
+    if not isinstance(content, str):
+        return jsonify({'error': 'Content must be a string'}), 400
+    content = content.strip()
     if not content:
         return jsonify({'error': 'Content is required'}), 400
+    if len(content) > MAX_QUESTION_LENGTH:
+        return jsonify({'error': f'Content must be {MAX_QUESTION_LENGTH} characters or fewer'}), 400
         
     new_id = database.add_question(board_slug, content)
     return jsonify({'id': new_id, 'status': 'success'}), 201
@@ -44,7 +50,7 @@ def vote_question(board_slug, question_id):
         amount = 20
     else:
         amount = 1
-    new_votes = database.vote_question(question_id, amount)
+    new_votes = database.vote_question(question_id, amount, board_slug=board_slug)
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
     return jsonify({'votes': new_votes, 'id': question_id})

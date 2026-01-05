@@ -39,13 +39,21 @@ def get_questions(board_slug):
     conn.close()
     return [dict(q) for q in questions]
 
-def vote_question(question_id, amount=1):
+def vote_question(question_id, amount=1, board_slug=None):
     conn = get_db_connection()
-    conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
+    if board_slug:
+        conn.execute(
+            'UPDATE questions SET votes = votes + ? WHERE id = ? AND board_slug = ?',
+            (amount, question_id, board_slug)
+        )
+        row = conn.execute(
+            'SELECT votes FROM questions WHERE id = ? AND board_slug = ?',
+            (question_id, board_slug)
+        ).fetchone()
+    else:
+        conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
+        row = conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()
     conn.commit()
-
-    # Fetch updated vote count
-    row = conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()
     conn.close()
     return row['votes'] if row else None
 

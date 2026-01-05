@@ -27,7 +27,7 @@
     </div>
     
     <script>
-        const BOARD_SLUG = "{{ board_slug }}";
+        const BOARD_SLUG = {{ board_slug | tojson }};
     </script>
     <script src="/static/app.js"></script>
 </body>
