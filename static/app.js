@@ -204,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         voteBtn.innerHTML = '&#9650;'; // Up arrow
         const voteCountSpan = document.createElement('span'); // Declare here for closure
         
-        voteBtn.onclick = () => handleVote(q.id, voteBtn, voteCountSpan);
-        if (hasVoted) voteBtn.disabled = true;
+        voteBtn.onclick = (event) => handleVote(q.id, voteBtn, voteCountSpan, event);
+        if (hasVoted && BOARD_SLUG !== 'testing') voteBtn.disabled = true;
 
         voteCountSpan.className = 'vote-count';
         voteCountSpan.textContent = q.votes;
@@ -219,20 +219,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    async function handleVote(id, btn, countSpan) {
-        if (localStorage.getItem(`voted_${id}`)) return;
+    async function handleVote(id, btn, countSpan, event) {
+        // On testing board, allow multiple votes with Alt key
+        const isTestingBoard = BOARD_SLUG === 'testing';
+        const allowMultipleVotes = isTestingBoard && event && event.altKey;
+        
+        if (localStorage.getItem(`voted_${id}`) && !allowMultipleVotes) return;
+
+        // Calculate vote amount based on keyboard modifiers (testing board only)
+        let amount = 1;
+        if (isTestingBoard && event) {
+            const shift = event.shiftKey;
+            const ctrl = event.ctrlKey || event.metaKey; // Support both Ctrl (Windows/Linux) and Cmd (Mac)
+            
+            if (shift && ctrl) {
+                amount = 100;
+            } else if (ctrl) {
+                amount = 20;
+            } else if (shift) {
+                amount = 3;
+            }
+        }
 
         // NOTE: Ensure 'pollTimer' is defined in your top-level variables
         clearTimeout(pollTimer); // Stop polling during vote
 
         const response = await fetch(`/api/${BOARD_SLUG}/questions/${id}/vote`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount })
         });
 
         if (response.ok) {
-            localStorage.setItem(`voted_${id}`, 'true');
-            btn.classList.add('voted');
-            btn.disabled = true;
+            if (!allowMultipleVotes) {
+                localStorage.setItem(`voted_${id}`, 'true');
+                btn.classList.add('voted');
+                btn.disabled = true;
+            }
             
             await fetchAndRenderQuestions();
             startPolling();

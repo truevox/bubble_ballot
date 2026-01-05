@@ -92,17 +92,29 @@ class BoardTestCase(unittest.TestCase):
         self.assertEqual(rv.status_code, 201)
         q_id = json.loads(rv.data)['id']
 
-        # Vote once
-        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        # Vote with default amount (1)
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote',
+                           data=json.dumps({}),
+                           content_type='application/json')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
-        self.assertEqual(data['votes'], 20)
+        self.assertEqual(data['votes'], 1)
 
-        # Vote again
-        rv = self.app.post(f'/api/testing/questions/{q_id}/vote')
+        # Vote with amount 20
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote',
+                           data=json.dumps({'amount': 20}),
+                           content_type='application/json')
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data)
-        self.assertEqual(data['votes'], 40)
+        self.assertEqual(data['votes'], 21)
+        
+        # Vote with amount 100
+        rv = self.app.post(f'/api/testing/questions/{q_id}/vote',
+                           data=json.dumps({'amount': 100}),
+                           content_type='application/json')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertEqual(data['votes'], 121)
 
     def test_vote_non_existent_question(self):
         rv = self.app.post('/api/any_board/questions/999/vote')
