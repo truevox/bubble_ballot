@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 import database
-import search
 import os
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Please go to a board, e.g., <a href='/general'>/general</a>"
+    return render_template('landing.html')
 
 @app.route('/<board_slug>')
 def board(board_slug):
@@ -20,11 +19,12 @@ def board(board_slug):
 
 @app.route('/api/<board_slug>/questions', methods=['GET'])
 def get_questions(board_slug):
-    questions = database.get_questions(board_slug)
     query = request.args.get('q')
     
     if query:
-        questions = search.search_questions(query, questions)
+        questions = database.search_questions(board_slug, query, limit=20)
+    else:
+        questions = database.get_questions(board_slug)
         
     return jsonify(questions)
 
@@ -48,6 +48,11 @@ def vote_question(board_slug, question_id):
     if new_votes is None:
         return jsonify({'error': 'Question not found'}), 404
     return jsonify({'votes': new_votes, 'id': question_id})
+
+@app.route('/api/boards/recent', methods=['GET'])
+def get_recent_boards():
+    boards = database.get_recent_boards()
+    return jsonify(boards)
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
