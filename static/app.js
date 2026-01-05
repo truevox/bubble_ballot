@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let amount = 1;
         if (isTestingBoard && event) {
             const shift = event.shiftKey;
-            const ctrl = event.ctrlKey || event.metaKey; // Support both Ctrl and Cmd
+            const ctrl = event.ctrlKey || event.metaKey; // Support both Ctrl (Windows/Linux) and Cmd (Mac)
             
             if (shift && ctrl) {
                 amount = 100;

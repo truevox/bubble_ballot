@@ -104,21 +104,6 @@ def init_testing_board():
     """
     conn = get_db_connection()
     
-    # Check if testing board already has these questions
-    existing = conn.execute(
-        'SELECT content FROM questions WHERE board_slug = ? AND content IN (?, ?, ?, ?, ?)',
-        ('testing', 'To be?', 'Or not to be?', 'If not, why not?', 'Just because?', 'MOAR BUBBLES!!!')
-    ).fetchall()
-    
-    if len(existing) >= 5:
-        # Already populated
-        conn.close()
-        return
-    
-    # Clear existing testing board questions to start fresh
-    conn.execute('DELETE FROM questions WHERE board_slug = ?', ('testing',))
-    conn.commit()
-    
     questions = [
         'To be?',
         'Or not to be?',
@@ -127,11 +112,28 @@ def init_testing_board():
         'MOAR BUBBLES!!!'
     ]
     
+    QUESTION_COUNT = len(questions)
+    
+    # Check if testing board already has these questions
+    existing = conn.execute(
+        'SELECT content FROM questions WHERE board_slug = ? AND content IN (?, ?, ?, ?, ?)',
+        ('testing', *questions)
+    ).fetchall()
+    
+    if len(existing) >= QUESTION_COUNT:
+        # Already populated
+        conn.close()
+        return
+    
+    # Clear existing testing board questions to start fresh
+    conn.execute('DELETE FROM questions WHERE board_slug = ?', ('testing',))
+    conn.commit()
+    
     # Shuffle to randomize which gets which vote count
-    indices = list(range(5))
+    indices = list(range(QUESTION_COUNT))
     random.shuffle(indices)
     
-    vote_counts = [0] * 5
+    vote_counts = [0] * QUESTION_COUNT
     vote_counts[indices[0]] = 0  # One random at 0
     vote_counts[indices[1]] = random.randint(201, 400)  # One random at 201-400
     vote_counts[indices[2]] = random.randint(10, 120)  # Three random at 10-120

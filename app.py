@@ -47,8 +47,9 @@ def vote_question(board_slug, question_id):
     else:
         amount = 1
     
-    # Validate amount to prevent abuse
-    if not isinstance(amount, int) or amount < 1 or amount > 100:
+    # Validate amount to prevent abuse (max 100 matches frontend Shift+Ctrl modifier)
+    MAX_VOTE_AMOUNT = 100
+    if not isinstance(amount, int) or amount < 1 or amount > MAX_VOTE_AMOUNT:
         amount = 1
     
     new_votes = database.vote_question(question_id, amount)

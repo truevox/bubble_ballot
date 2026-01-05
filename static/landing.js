@@ -158,29 +158,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     linkA.y < linkB.y + linkB.height &&
                     linkA.y + linkA.height > linkB.y) {
 
-                    // Calculate overlap
-                    const dx = bCenterX - aCenterX;
-                    const dy = bCenterY - aCenterY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance > 0) {
-                        // Normalize direction
-                        const nx = dx / distance;
-                        const ny = dy / distance;
+                    // Calculate overlap on each axis
+                    const overlapX = Math.min(
+                        linkA.x + linkA.width - linkB.x,
+                        linkB.x + linkB.width - linkA.x
+                    );
+                    const overlapY = Math.min(
+                        linkA.y + linkA.height - linkB.y,
+                        linkB.y + linkB.height - linkA.y
+                    );
 
-                        // Separate the boards
-                        const overlapX = (linkA.width + linkB.width) / 2 - Math.abs(dx);
-                        const overlapY = (linkA.height + linkB.height) / 2 - Math.abs(dy);
-                        const separation = Math.min(overlapX, overlapY) * 0.5;
-
-                        linkA.x -= nx * separation;
-                        linkA.y -= ny * separation;
-                        linkB.x += nx * separation;
-                        linkB.y += ny * separation;
-
-                        // Bounce velocities with some energy loss
+                    // Separate along axis of least penetration
+                    if (overlapX < overlapY) {
+                        // Separate horizontally
+                        const separationX = overlapX / 2;
+                        if (aCenterX < bCenterX) {
+                            linkA.x -= separationX;
+                            linkB.x += separationX;
+                        } else {
+                            linkA.x += separationX;
+                            linkB.x -= separationX;
+                        }
+                        // Bounce horizontally
                         const restitution = 0.8;
                         [linkA.vx, linkB.vx] = [linkB.vx * restitution, linkA.vx * restitution];
+                    } else {
+                        // Separate vertically
+                        const separationY = overlapY / 2;
+                        if (aCenterY < bCenterY) {
+                            linkA.y -= separationY;
+                            linkB.y += separationY;
+                        } else {
+                            linkA.y += separationY;
+                            linkB.y -= separationY;
+                        }
+                        // Bounce vertically
+                        const restitution = 0.8;
                         [linkA.vy, linkB.vy] = [linkB.vy * restitution, linkA.vy * restitution];
                     }
                 }
