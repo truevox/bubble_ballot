@@ -49,5 +49,42 @@ def vote_question(question_id, amount=1):
     conn.close()
     return row['votes'] if row else None
 
+def get_recent_boards():
+    """
+    Retrieves the 3 most recently active boards based on the latest question creation time.
+
+    Returns:
+        list: A list of board slug strings.
+    """
+    conn = get_db_connection()
+    boards = conn.execute('''
+        SELECT board_slug
+        FROM questions
+        GROUP BY board_slug
+        ORDER BY MAX(created_at) DESC
+        LIMIT 3
+    ''').fetchall()
+    conn.close()
+    return [dict(b)['board_slug'] for b in boards]
+
+def search_questions(board_slug, query, limit=10):
+    """
+    Searches for questions in a specific board using a case-insensitive LIKE match.
+
+    Args:
+        board_slug (str): The slug of the board to search.
+        query (str): The search query substring.
+        limit (int): Maximum number of results to return (default 10).
+
+    Returns:
+        list: A list of question dictionaries matching the query.
+    """
+    conn = get_db_connection()
+    query = f"%{query}%"
+    questions = conn.execute('SELECT * FROM questions WHERE board_slug = ? AND content LIKE ? ORDER BY votes DESC, created_at DESC LIMIT ?',
+                             (board_slug, query, limit)).fetchall()
+    conn.close()
+    return [dict(q) for q in questions]
+
 # Initialize DB on import (safe if already exists)
 init_db()

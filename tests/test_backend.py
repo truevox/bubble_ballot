@@ -132,5 +132,19 @@ class BoardTestCase(unittest.TestCase):
         if data: # fuzzy matching might be tricky with short strings, let's see
              self.assertEqual(data[0]['content'], 'Banana')
 
+    def test_get_recent_boards_api(self):
+        # Add some activity
+        self.app.post('/api/board_recent_1/questions',
+                      data=json.dumps({'content': 'q'}),
+                      content_type='application/json')
+
+        rv = self.app.get('/api/boards/recent')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+
+        self.assertIsInstance(data, list)
+        if len(data) > 0:
+            self.assertIn('board_recent_1', data)
+
 if __name__ == '__main__':
     unittest.main()
