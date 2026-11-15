@@ -172,7 +172,7 @@ def add_question(slug, content, author_id):
         return cur.lastrowid
 
 
-def vote(slug, question_id, client_id):
+def vote(slug, question_id, client_id, amount=1):
     """Idempotent upvote. Returns votes count, or None if not in this board."""
     with _tx() as conn:
         if not conn.execute('SELECT 1 FROM questions WHERE id = ? AND board_slug = ?',
@@ -181,11 +181,11 @@ def vote(slug, question_id, client_id):
         cur = conn.execute('INSERT OR IGNORE INTO votes (question_id, client_id) VALUES (?, ?)',
                            (question_id, client_id))
         if cur.rowcount:
-            conn.execute('UPDATE questions SET votes = votes + 1 WHERE id = ?', (question_id,))
+            conn.execute('UPDATE questions SET votes = votes + ? WHERE id = ?', (amount, question_id))
         return conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()['votes']
 
 
-def unvote(slug, question_id, client_id):
+def unvote(slug, question_id, client_id, amount=1):
     """Idempotent un-vote. Returns votes count, or None if not in this board."""
     with _tx() as conn:
         if not conn.execute('SELECT 1 FROM questions WHERE id = ? AND board_slug = ?',
@@ -194,9 +194,23 @@ def unvote(slug, question_id, client_id):
         cur = conn.execute('DELETE FROM votes WHERE question_id = ? AND client_id = ?',
                            (question_id, client_id))
         if cur.rowcount:
-            conn.execute('UPDATE questions SET votes = MAX(votes - 1, 0) WHERE id = ?',
-                         (question_id,))
+            conn.execute('UPDATE questions SET votes = MAX(votes - ?, 0) WHERE id = ?',
+                         (amount, question_id))
         return conn.execute('SELECT votes FROM questions WHERE id = ?', (question_id,)).fetchone()['votes']
+
+
+def get_recent_boards(limit=3):
+    """Slugs of the most recently active boards, newest question first."""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute('''
+            SELECT board_slug FROM questions
+            GROUP BY board_slug
+            ORDER BY MAX(created_at) DESC, MAX(id) DESC
+        ''').fetchall()
+    finally:
+        conn.close()
+    return [r['board_slug'] for r in rows if is_valid_slug(r['board_slug'])][:limit]
 
 
 def delete_question(slug, question_id):

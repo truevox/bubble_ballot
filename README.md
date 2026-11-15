@@ -64,7 +64,8 @@ For a public deployment, run the app behind an HTTPS reverse proxy (such as Cadd
 ## Good to know
 
 - Identity is a random ID kept in each browser's localStorage. Vote limits and host status are per browser and are not tamper-proof: someone can clear their storage or switch browsers and vote again. This is fine for classrooms and meetings, but do not use it for polls that must be binding.
-- Boards are unlisted, but anyone who knows or guesses a board name can open it and post. Pick an unusual name, or leave the name blank on the home page to get a generated one.
+- Boards are not private. The home page shows the three most recently active board names as floating links, and anyone who knows or guesses a board name can open it and post.
+- On the board named `testing`, every vote counts as 20. It exists to try out the high-vote visuals.
 - Clearing browser data loses host status unless the host link was saved. Save the host link (a bookmark or password manager) before relying on a board.
 - Posting is rate-limited per client IP: 120 new questions per 60 seconds, which leaves room for a whole class behind one school network address. Votes are not limited. The counter lives in memory in each gunicorn worker, so with the default two workers the effective limit can be up to double that.
 - Questions are at most 280 characters after whitespace is collapsed. A board returns at most 500 questions, highest-voted first.
@@ -83,7 +84,7 @@ python -m pytest
 - `app.py`: Flask app. Page routes (`/`, `/<board>`), the rate limiter and the environment settings.
 - `database.py`: SQLite access. Creates the `questions`, `votes` and `boards` tables on import, and holds the slug rules.
 - `templates/`: Jinja pages (`landing.html`, `board.html`, `404.html`, `_head.html`).
-- `static/`: `app.js` (board page), `landing.js`, `common.js`, `style.css`, `favicon.svg`.
+- `static/`: `app.js` and `style.css` (board page), `landing.js` and `landing.css` (island scene on the home page), `start.js` (home page form), `common.js`, `favicon.svg`.
 - `VERSION`: version string read by `app.py`.
 
 The frontend has no build step: edit the files in `static/` and `templates/` and reload. After changing Python code, rebuild the container with `docker compose up -d --build`.

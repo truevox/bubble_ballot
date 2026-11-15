@@ -57,7 +57,7 @@ def test_api_invalid_slug_and_unknown_path(client):
     r = client.get('/api/API/questions')
     assert r.status_code == 404 and r.get_json() == {'error': 'Board not found'}
     assert client.get('/api/Bad_Slug/questions').status_code == 404
-    assert client.get('/api/boards/recent').status_code == 404
+    assert client.get('/api/nope/nothing').status_code == 404
     r = client.get('/api/x/nothing/here/at/all')
     assert r.status_code == 404 and r.get_json() == {'error': 'Not found'}
 
@@ -202,11 +202,6 @@ def test_vote_requires_client_id(client):
     assert client.delete(f'/api/demo/questions/{qid}/vote').status_code == 400
 
 
-def test_no_special_testing_board(client):
-    qid = post_q(client, slug='testing').get_json()['id']
-    assert client.post(f'/api/testing/questions/{qid}/vote', headers=hdr(BOB)).get_json()['votes'] == 1
-
-
 # ---------- delete / answered ----------
 
 def test_delete_by_author_host_stranger(client):
@@ -323,3 +318,19 @@ def test_migrates_old_schema(db_path):
 def test_board_page_accepts_trailing_slash(client):
     r = client.get('/town-hall/', follow_redirects=True)
     assert r.status_code == 200
+
+
+def test_recent_boards_lists_three_most_recent(client):
+    assert client.get('/api/boards/recent').get_json() == []
+    for slug in ('one', 'two', 'three', 'four'):
+        assert client.post(f'/api/{slug}/questions', json={'content': 'hi'}, headers=hdr(ALICE)).status_code == 201
+    assert client.get('/api/boards/recent').get_json() == ['four', 'three', 'two']
+
+
+def test_testing_board_votes_count_twenty(client):
+    qid = client.post('/api/testing/questions', json={'content': 'hi'}, headers=hdr(ALICE)).get_json()['id']
+    url = f'/api/testing/questions/{qid}/vote'
+    assert client.post(url, headers=hdr(ALICE)).get_json()['votes'] == 20
+    assert client.post(url, headers=hdr(ALICE)).get_json()['votes'] == 20
+    assert client.post(url, headers=hdr(BOB)).get_json()['votes'] == 40
+    assert client.delete(url, headers=hdr(ALICE)).get_json()['votes'] == 20

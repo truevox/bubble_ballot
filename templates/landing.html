@@ -1,66 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% include "_head.html" %}
-    <title>Bubble Ballot — live Q&amp;A where the best questions rise</title>
-    <meta name="description" content="Start a Q&amp;A board in seconds. Everyone asks and upvotes anonymously, and the best questions rise to the top. No sign-up.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Ballot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rock+Salt&family=Rye&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#87CEEB">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/landing.css?v={{ version }}">
 </head>
 <body>
-    <div class="sky" aria-hidden="true">
-        <div class="sun"></div>
-        <div class="cloud c1"></div>
-        <div class="cloud c2"></div>
-        <svg class="island" viewBox="0 0 230 130" xmlns="http://www.w3.org/2000/svg">
-            <g class="palm">
-                <path d="M118 98 C114 76 118 58 128 40" fill="none" stroke="#8a5a34" stroke-width="7" stroke-linecap="round"/>
-                <g fill="#2f9e58">
-                    <path d="M128 40 C108 22 86 24 72 38 C92 32 110 36 128 40Z"/>
-                    <path d="M128 40 C120 16 100 6 82 10 C102 16 116 26 128 40Z"/>
-                    <path d="M128 40 C150 22 172 26 184 42 C166 34 146 36 128 40Z"/>
-                    <path d="M128 40 C140 16 160 8 176 14 C158 18 140 28 128 40Z"/>
-                    <path d="M128 40 C132 58 126 72 114 80 C120 66 122 52 128 40Z" fill="#268a4b"/>
-                </g>
-                <circle cx="124" cy="45" r="4.5" fill="#6b4226"/>
-                <circle cx="132" cy="47" r="4.5" fill="#7a4d2c"/>
-            </g>
-            <path d="M14 130 C40 100 82 90 118 90 C158 90 194 102 218 130Z" fill="#f2c27a"/>
-            <path d="M52 130 C76 110 104 104 128 104 C104 110 84 118 70 130Z" fill="#e9b266" opacity=".6"/>
-        </svg>
-        <svg class="waves back" viewBox="0 0 2400 26" preserveAspectRatio="none"><path d="M0 12 Q150 0 300 12 T600 12 T900 12 T1200 12 T1500 12 T1800 12 T2100 12 T2400 12 V26 H0Z"/></svg>
-        <svg class="waves front" viewBox="0 0 2400 26" preserveAspectRatio="none"><path d="M0 14 Q150 2 300 14 T600 14 T900 14 T1200 14 T1500 14 T1800 14 T2100 14 T2400 14 V26 H0Z"/></svg>
+    <canvas id="canvas"></canvas>
+    <div id="content">
+        <h1 class="title">Welcome to Bubble Ballot!<br>Dive into an ocean of questions!</h1>
+        <div class="boards">
+            <a href="/general" class="board-link">/general</a>
+            <a href="/testing" class="board-link">/testing</a>
+            <a href="/whatsfordinner" class="board-link">/whatsfordinner</a>
+        </div>
     </div>
-    <div class="backdrop" aria-hidden="true"></div>
-
-    <main class="sea">
-        <h1 class="hero-title">Bubble Ballot</h1>
-        <p class="hero-sub">Live Q&amp;A for classes, meetings and events. Everyone asks, everyone votes, and the best questions rise to the top.</p>
-
-        <form class="start" id="startForm" novalidate>
-            <label for="boardName">Start or join a board</label>
-            <div class="start-row">
-                <input class="field" id="boardName" name="board" type="text" maxlength="60"
-                       autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go"
-                       placeholder="e.g. Friday town hall" aria-describedby="startHint">
-                <button class="btn btn-primary" type="submit" id="startBtn">Dive in</button>
-            </div>
-            <p class="start-hint" id="startHint">No sign-up. Leave it blank and we'll pick a private name for you.</p>
-        </form>
-
-        <section class="recent" id="recent" hidden>
-            <h2>Your recent boards</h2>
-            <div class="chips" id="recentList"></div>
-        </section>
-
-        <h2 class="sr-only">How it works</h2>
-        <ol class="steps">
-            <li><h3>Open a board</h3><p>Name it, and you're the host. It's live instantly.</p></li>
-            <li><h3>Share it</h3><p>Send the link or put the QR code on screen.</p></li>
-            <li><h3>Ask &amp; upvote</h3><p>Anonymous by default. Popular questions float up.</p></li>
-        </ol>
-    </main>
-
-    <footer class="page-footer">Bubble Ballot v{{ version }}</footer>
-    <script src="/static/common.js?v={{ version }}"></script>
+    <form class="start" id="startForm" novalidate>
+        <label for="boardName">Start or join a board</label>
+        <div class="start-row">
+            <input id="boardName" name="board" type="text" maxlength="60"
+                   autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go"
+                   placeholder="e.g. Friday town hall" aria-describedby="startHint">
+            <button type="submit" id="startBtn">Dive in</button>
+        </div>
+        <p class="start-hint" id="startHint">No sign-up. Leave it blank and we'll pick a name for you.</p>
+    </form>
     <script src="/static/landing.js?v={{ version }}"></script>
+    <script src="/static/common.js?v={{ version }}"></script>
+    <script src="/static/start.js?v={{ version }}"></script>
 </body>
 </html>

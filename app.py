@@ -30,6 +30,7 @@ CLIENT_ID_RE = re.compile(r'^[A-Za-z0-9_-]{8,64}$')
 MAX_CONTENT_CHARS = 280
 RATE_LIMIT_MAX = 120
 RATE_LIMIT_WINDOW = 60.0
+TESTING_VOTE_WEIGHT = 20
 _rate_hits = defaultdict(deque)
 _rate_lock = threading.Lock()
 
@@ -200,10 +201,12 @@ def vote_question(board_slug, question_id):
     cid, e = _client_id(required=True)
     if e:
         return e
+    # The 'testing' board weights every vote x20, to exercise the high-count visuals.
+    amount = TESTING_VOTE_WEIGHT if board_slug == 'testing' else 1
     if request.method == 'POST':
-        votes = database.vote(board_slug, question_id, cid)
+        votes = database.vote(board_slug, question_id, cid, amount)
     else:
-        votes = database.unvote(board_slug, question_id, cid)
+        votes = database.unvote(board_slug, question_id, cid, amount)
     if votes is None:
         return err('Question not found', 404)
     return jsonify({'id': question_id, 'votes': votes, 'voted': request.method == 'POST'})
@@ -243,6 +246,11 @@ def patch_question(board_slug, question_id):
     if not database.set_answered(board_slug, question_id, answered):
         return err('Question not found', 404)
     return jsonify(database.get_question(board_slug, question_id, cid))
+
+
+@app.route('/api/boards/recent', methods=['GET'])
+def get_recent_boards():
+    return jsonify(database.get_recent_boards())
 
 
 @app.route('/api/<board_slug>/claim', methods=['POST'])
