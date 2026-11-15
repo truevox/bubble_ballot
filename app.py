@@ -28,7 +28,7 @@ if os.environ.get('TRUST_PROXY') == '1':
 
 CLIENT_ID_RE = re.compile(r'^[A-Za-z0-9_-]{8,64}$')
 MAX_CONTENT_CHARS = 280
-RATE_LIMIT_MAX = 30
+RATE_LIMIT_MAX = 120
 RATE_LIMIT_WINDOW = 60.0
 _rate_hits = defaultdict(deque)
 _rate_lock = threading.Lock()
@@ -114,7 +114,7 @@ def robots():
     return Response('User-agent: *\nDisallow: /\n', mimetype='text/plain')
 
 
-@app.route('/<board_slug>')
+@app.route('/<board_slug>', strict_slashes=False)
 def board(board_slug):
     if is_valid_slug(board_slug):
         return render_template('board.html', board_slug=board_slug, version=VERSION)

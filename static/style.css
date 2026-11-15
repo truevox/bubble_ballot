@@ -1,20 +1,20 @@
 /* Bubble Ballot — shared styles for the landing page, boards and the 404 page. */
 
 :root {
-    --sea-top: #0b7fa8;
-    --sea-mid: #075079;
+    --sea-top: #086890;
+    --sea-mid: #05476c;
     --sea-deep: #03223a;
     --ink: #04263d;
     --text: #f0f9fd;
-    --text-soft: rgba(240, 249, 253, 0.72);
-    --text-faint: rgba(240, 249, 253, 0.5);
+    --text-soft: rgba(240, 249, 253, 0.86);
+    --text-faint: rgba(240, 249, 253, 0.74);
     --glass: rgba(255, 255, 255, 0.09);
     --glass-strong: rgba(255, 255, 255, 0.16);
     --line: rgba(255, 255, 255, 0.2);
     --line-strong: rgba(255, 255, 255, 0.45);
     --coral: #ff7f5e;
     --coral-strong: #ff6a44;
-    --danger: #ffb4a6;
+    --danger: #ffd0c6;
     --ok: #8ff0c4;
     --radius: 18px;
     --shadow: 0 10px 30px rgba(1, 20, 36, 0.28);
@@ -221,7 +221,7 @@ button { cursor: pointer; touch-action: manipulation; }
     height: 26px;
     display: block;
 }
-.waves.back { fill: #3fa3c9; bottom: 5px; animation: wave 16s linear infinite reverse; opacity: 0.8; }
+.waves.back { fill: #3a97bd; bottom: 5px; animation: wave 16s linear infinite reverse; opacity: 0.8; }
 .waves.front { fill: var(--sea-top); animation: wave 11s linear infinite; }
 @keyframes wave {
     to { transform: translateX(-50%); }
@@ -378,7 +378,7 @@ button { cursor: pointer; touch-action: manipulation; }
     border-radius: 999px;
     font-size: 0.78rem; font-weight: 700;
     border: 1px solid var(--line);
-    background: var(--glass);
+    background: rgba(2, 26, 45, 0.4);
     color: var(--text);
 }
 .badge-ok { color: var(--ok); border-color: rgba(143, 240, 196, 0.45); background: rgba(143, 240, 196, 0.1); }
@@ -424,9 +424,9 @@ button { cursor: pointer; touch-action: manipulation; }
     margin-top: 12px;
     padding: 10px 14px;
     border-radius: 14px;
-    background: rgba(255, 217, 168, 0.12);
-    border: 1px solid rgba(255, 217, 168, 0.4);
-    color: #ffe9cf;
+    background: rgba(2, 26, 45, 0.5);
+    border: 1px solid rgba(255, 217, 168, 0.55);
+    color: #fff0dd;
     font-size: 0.93rem;
 }
 .linkish {
@@ -627,7 +627,7 @@ dialog.sheet :focus-visible { outline-color: var(--sea-mid); }
 .icon-btn svg { width: 18px; height: 18px; }
 .qr {
     display: block;
-    width: min(260px, 100%);
+    width: min(260px, 100%, 36dvh);
     aspect-ratio: 1;
     margin: 18px auto 14px;
     border-radius: 16px;

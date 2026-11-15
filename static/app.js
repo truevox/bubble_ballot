@@ -274,13 +274,18 @@
 
         // Header
         const votes = all.reduce((sum, q) => sum + q.votes, 0);
-        els.meta.textContent = '';
-        els.meta.append(all.length ? `${plural(all.length, 'question')} · ${plural(votes, 'vote')}` : 'Live Q&A board');
-        if (state.isHost) {
-            const badge = document.createElement('span');
-            badge.className = 'badge';
-            badge.textContent = "You're the host";
-            els.meta.append(badge);
+        const summary = all.length ? `${plural(all.length, 'question')} · ${plural(votes, 'vote')}` : 'Live Q&A board';
+        const metaSignature = `${summary}|${state.isHost}`;
+        if (els.meta.dataset.signature !== metaSignature) {
+            els.meta.dataset.signature = metaSignature;
+            els.meta.textContent = '';
+            els.meta.append(summary);
+            if (state.isHost) {
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.textContent = "You're the host";
+                els.meta.append(badge);
+            }
         }
 
         // Similar questions while typing
@@ -333,8 +338,13 @@
             updateCard(li, q);
             return li;
         });
+        // Moving a focused node blurs it, so put keyboard focus back afterwards.
+        const focused = document.activeElement;
         place(els.openList, toItems(open));
         place(els.answeredList, toItems(answered));
+        if (focused && focused !== document.activeElement && focused.isConnected && focused.closest('.q')) {
+            focused.focus({ preventScroll: true });
+        }
 
         els.answeredLabel.hidden = !answered.length;
         els.answeredLabel.textContent = `Answered · ${answered.length}`;
@@ -403,7 +413,8 @@
         try {
             const data = await api('GET', '/questions');
             setOnline(true);
-            if (startedAt === mutations) {
+            // Ignore a snapshot that raced with a local change or an in-flight request.
+            if (startedAt === mutations && busy.size === 0) {
                 state.questions = data.questions;
                 state.isHost = Boolean(data.board.is_host);
                 const first = !state.loaded;
@@ -671,7 +682,10 @@
     $('emptyShare').addEventListener('click', openShare);
     $('shareClose').addEventListener('click', closeShare);
     els.shareDialog.addEventListener('click', event => {
-        if (event.target === els.shareDialog) closeShare(); // click on the backdrop
+        if (event.target !== els.shareDialog) return;
+        const r = els.shareDialog.getBoundingClientRect();
+        const inside = event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+        if (!inside) closeShare(); // click on the backdrop
     });
     els.shareUrl.addEventListener('focus', () => els.shareUrl.select());
     $('copyLink').addEventListener('click', event => copy(boardUrl, event.currentTarget, 'Copied!'));

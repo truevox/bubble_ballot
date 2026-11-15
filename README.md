@@ -66,7 +66,7 @@ For a public deployment, run the app behind an HTTPS reverse proxy (such as Cadd
 - Identity is a random ID kept in each browser's localStorage. Vote limits and host status are per browser and are not tamper-proof: someone can clear their storage or switch browsers and vote again. This is fine for classrooms and meetings, but do not use it for polls that must be binding.
 - Boards are unlisted, but anyone who knows or guesses a board name can open it and post. Pick an unusual name, or leave the name blank on the home page to get a generated one.
 - Clearing browser data loses host status unless the host link was saved. Save the host link (a bookmark or password manager) before relying on a board.
-- Posting is rate-limited per client IP: 30 new questions per 60 seconds. Votes are not limited. The counter lives in memory in each gunicorn worker, so with the default two workers the effective limit can be up to 60 per minute.
+- Posting is rate-limited per client IP: 120 new questions per 60 seconds, which leaves room for a whole class behind one school network address. Votes are not limited. The counter lives in memory in each gunicorn worker, so with the default two workers the effective limit can be up to double that.
 - Questions are at most 280 characters after whitespace is collapsed. A board returns at most 500 questions, highest-voted first.
 - The only editing and moderation tools are the host's answer and remove actions and each person's own remove action. There is no way to edit a question or delete a whole board.
 - Back up the database file named by `BUBBLE_DB`. Stop the app or use SQLite's `.backup` command for a consistent copy. In Docker it is `/data/board.db` inside the `bubble-data` volume.

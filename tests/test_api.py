@@ -284,7 +284,7 @@ def test_qr_svg(client):
 def test_rate_limit(client):
     app_module.app.config['RATE_LIMIT_ENABLED'] = True
     app_module.reset_rate_limits()
-    for _ in range(30):
+    for _ in range(app_module.RATE_LIMIT_MAX):
         assert post_q(client).status_code == 201
     r = post_q(client)
     assert r.status_code == 429
@@ -318,3 +318,8 @@ def test_migrates_old_schema(db_path):
     assert c.post('/api/old/claim').status_code == 409
     cols = {r[1] for r in sqlite3.connect(db_path).execute('PRAGMA table_info(questions)')}
     assert {'author_id', 'answered'} <= cols
+
+
+def test_board_page_accepts_trailing_slash(client):
+    r = client.get('/town-hall/', follow_redirects=True)
+    assert r.status_code == 200
