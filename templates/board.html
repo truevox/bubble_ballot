@@ -1,34 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Underwater Questions - {{ board_slug }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    {% include "_head.html" %}
+    <title>{{ board_slug }} · Bubble Ballot</title>
 </head>
-<body>
-    <div class="ocean">
-        <div class="version">{{ version }}</div>
-        <div class="surface"></div>
-        <div class="container">
-            <header>
-                <h1>Board: /{{ board_slug }}</h1>
-            </header>
-            
-            <div class="input-area">
-                <textarea id="questionInput" placeholder="Type your question here... (Duplicates will filter below)" rows="3"></textarea>
-                <button id="submitBtn">Submit Bubble</button>
-            </div>
+<body data-board="{{ board_slug }}">
+    <div class="backdrop" aria-hidden="true"></div>
 
-            <div id="questionsList" class="bubbles-container">
-                <!-- Questions will be loaded here -->
-            </div>
+    <header class="topbar">
+        <a class="brand" href="/" aria-label="Bubble Ballot home">
+            <span class="brand-mark" aria-hidden="true"></span><span>Bubble Ballot</span>
+        </a>
+        <button class="btn btn-small" id="shareBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+            Share
+        </button>
+    </header>
+
+    <main class="board">
+        <div class="board-head">
+            <h1 class="board-title" id="boardTitle">{{ board_slug }}</h1>
+            <p class="board-meta" id="boardMeta" aria-live="polite"></p>
         </div>
-    </div>
-    
-    <script>
-        const BOARD_SLUG = "{{ board_slug }}";
-    </script>
-    <script src="/static/app.js"></script>
+
+        <form class="composer" id="composer" novalidate>
+            <label class="sr-only" for="questionInput">Your question</label>
+            <textarea class="field" id="questionInput" rows="1" enterkeyhint="send"
+                      placeholder="Ask a question…" aria-describedby="composerNote"></textarea>
+            <div class="composer-row">
+                <span class="composer-note" id="composerNote">
+                    <span id="counter" class="counter" hidden></span>
+                    <span id="composerHint">Anonymous<span class="kbd-hint"> · <kbd>Enter</kbd> to send</span></span>
+                </span>
+                <button class="btn btn-primary" id="submitBtn" type="submit" disabled>Ask</button>
+            </div>
+            <div class="similar" id="similar" role="status" hidden>
+                <span id="similarText"></span>
+                <button class="linkish" type="button" id="similarDismiss">Show all</button>
+            </div>
+        </form>
+
+        <div class="toolbar">
+            <div class="segmented" role="group" aria-label="Sort questions">
+                <button type="button" data-sort="top" aria-pressed="true">Top</button>
+                <button type="button" data-sort="new" aria-pressed="false">Newest</button>
+            </div>
+            <span class="status" id="status" role="status">Live</span>
+        </div>
+
+        <div id="loading" class="questions" aria-hidden="true">
+            <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+        </div>
+
+        <div class="empty" id="empty" hidden>
+            <div class="empty-art" aria-hidden="true">?</div>
+            <h2>No questions yet</h2>
+            <p>Ask the first one, or share this board so others can jump in.</p>
+            <button class="btn" type="button" id="emptyShare">Share this board</button>
+        </div>
+
+        <ul class="questions" id="openList" aria-label="Questions"></ul>
+        <h2 class="section-label" id="answeredLabel" hidden>Answered</h2>
+        <ul class="questions" id="answeredList" aria-label="Answered questions"></ul>
+    </main>
+
+    <footer class="page-footer">Bubble Ballot v{{ version }}</footer>
+
+    <dialog class="sheet" id="shareDialog" aria-labelledby="shareTitle">
+        <div class="sheet-head">
+            <div>
+                <h2 id="shareTitle">Invite people</h2>
+                <p>Scan the code or open the link. No sign-up needed.</p>
+            </div>
+            <button class="icon-btn" type="button" id="shareClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <img class="qr" id="qr" alt="QR code linking to this board" width="260" height="260">
+        <div class="copy-row">
+            <label class="sr-only" for="shareUrl">Board link</label>
+            <input id="shareUrl" type="text" readonly>
+            <button class="btn btn-dark" type="button" id="copyLink">Copy</button>
+        </div>
+        <button class="btn sheet-wide" type="button" id="nativeShare" hidden>Share via…</button>
+        <div class="sheet-block" id="hostBlock" hidden>
+            <h3>You're the host</h3>
+            <p>You can mark questions answered and remove them from this browser. To host from another device, open your private host link there. Don't share it with the audience.</p>
+            <button class="btn sheet-wide" type="button" id="copyHostLink">Copy host link</button>
+        </div>
+    </dialog>
+
+    <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+    <script src="/static/common.js?v={{ version }}"></script>
+    <script src="/static/app.js?v={{ version }}"></script>
 </body>
 </html>
